@@ -8,6 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Firebase v10 compat SDKs (works with classic <script>, no module type needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 <style>
 :root {
   --bg: #F7F5F0;
@@ -413,10 +417,178 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
   #confirmModal .modal { max-width: 320px !important; }
 }
 
+/* ─── AUTH SCREENS (sign-in, awaiting approval, revoked) ─────────────── */
+.auth-screen {
+  position: fixed; inset: 0; display: none;
+  align-items: center; justify-content: center;
+  background: var(--bg); z-index: 1000; padding: 24px;
+}
+.auth-screen.show { display: flex; }
+.auth-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 36px 32px;
+  max-width: 420px; width: 100%; text-align: center;
+  box-shadow: var(--shadow-md);
+}
+.auth-logo {
+  width: 56px; height: 56px; border-radius: 14px;
+  background: var(--accent); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 24px; margin-bottom: 18px;
+}
+.auth-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text); margin-bottom: 6px; line-height: 1.15; }
+.auth-sub { font-size: 14px; color: var(--text2); line-height: 1.55; margin-bottom: 24px; }
+.auth-btn-google {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 12px 22px; border-radius: var(--radius-sm);
+  background: #fff; border: 1px solid var(--border2); color: var(--text);
+  font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer;
+  transition: all 0.15s;
+}
+.auth-btn-google:hover { background: var(--surface2); }
+.auth-btn-google img { width: 18px; height: 18px; }
+.auth-user-chip {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--surface2); padding: 10px 16px; border-radius: 28px;
+  font-size: 13px; color: var(--text2); margin-bottom: 20px;
+}
+.auth-user-chip img { width: 28px; height: 28px; border-radius: 50%; }
+.auth-status-pill {
+  display: inline-block; padding: 6px 14px; border-radius: 20px;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+  text-transform: uppercase; margin-bottom: 16px;
+}
+.auth-status-pill.pending { background: var(--accent2-light); color: #7a5021; }
+.auth-status-pill.revoked { background: var(--danger-light); color: var(--danger); }
+.auth-spinner {
+  width: 28px; height: 28px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.7s linear infinite; margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.auth-foot {
+  margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text3); line-height: 1.5;
+}
+.auth-foot a { color: var(--accent); cursor: pointer; }
+
+/* User row in superadmin view */
+.user-row {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 16px;
+}
+.user-row img { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
+.user-row-info { flex: 1; min-width: 0; }
+.user-row-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.user-row-email { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.user-row-meta { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.user-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.user-section-head {
+  display: flex; align-items: baseline; gap: 8px;
+  font-family: 'DM Serif Display', serif; font-size: 18px;
+  color: var(--text); margin: 24px 0 10px;
+}
+.user-section-head:first-child { margin-top: 0; }
+.user-section-head .count {
+  font-family: 'DM Sans', sans-serif; font-size: 12px;
+  color: var(--text3); font-weight: 400;
+}
+.role-badge {
+  background: var(--accent-light); color: var(--accent);
+  padding: 2px 8px; border-radius: 10px; font-size: 10px;
+  font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase;
+  margin-left: 6px;
+}
+
+/* Account chip in sidebar */
+.sidebar-account {
+  padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.12);
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px; color: rgba(255,255,255,0.85);
+}
+.sidebar-account img { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; }
+.sidebar-account-info { flex: 1; min-width: 0; }
+.sidebar-account-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-account-email { font-size: 10px; color: rgba(255,255,255,0.55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-signout {
+  background: none; border: none; color: rgba(255,255,255,0.65);
+  cursor: pointer; padding: 6px; border-radius: 4px;
+}
+.sidebar-signout:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+@media (max-width: 720px) {
+  .auth-card { padding: 28px 22px; }
+  .auth-title { font-size: 22px; }
+  .user-row { flex-wrap: wrap; }
+  .user-row-actions { width: 100%; margin-top: 8px; }
+  .user-row-actions .btn { flex: 1 1 auto; justify-content: center; }
+}
+
 </style>
 </head>
 <body>
-<div class="app">
+
+<!-- ─── AUTH SCREENS ─────────────────────────────────────────────────── -->
+
+<!-- Loading state while Firebase initializes / checks auth -->
+<div id="authLoading" class="auth-screen show">
+  <div class="auth-card">
+    <div class="auth-spinner"></div>
+    <div class="auth-sub">Connecting…</div>
+  </div>
+</div>
+
+<!-- Sign in -->
+<div id="authSignIn" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo"><i class="fa-solid fa-camera-retro"></i></div>
+    <h1 class="auth-title">Memories Photography</h1>
+    <div class="auth-sub">Sign in with your Google account to access the estimates app.</div>
+    <button class="auth-btn-google" onclick="signInWithGoogle()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" />
+      Sign in with Google
+    </button>
+    <div id="authError" style="margin-top:14px;font-size:12px;color:var(--danger);"></div>
+  </div>
+</div>
+
+<!-- Awaiting approval -->
+<div id="authPending" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-status-pill pending">Awaiting approval</div>
+    <h1 class="auth-title">Almost there</h1>
+    <div class="auth-sub">Your sign-in is recorded. The studio admin will approve your access shortly. You'll be able to use the app once approved.</div>
+    <div class="auth-user-chip">
+      <img id="pendingPhoto" src="" alt="" />
+      <span id="pendingEmail"></span>
+    </div>
+    <div>
+      <button class="btn" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i> Sign out</button>
+    </div>
+    <div class="auth-foot">
+      This page refreshes automatically when approved.
+    </div>
+  </div>
+</div>
+
+<!-- Revoked / denied -->
+<div id="authRevoked" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-status-pill revoked">Access removed</div>
+    <h1 class="auth-title">No access</h1>
+    <div class="auth-sub">Your access to this app has been removed. Contact the studio admin if you think this is a mistake.</div>
+    <div class="auth-user-chip">
+      <img id="revokedPhoto" src="" alt="" />
+      <span id="revokedEmail"></span>
+    </div>
+    <div>
+      <button class="btn" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i> Sign out</button>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="appShell" style="display:none;">
 
 <!-- Mobile top app bar (hidden on desktop) -->
 <div class="mobile-bar">
@@ -439,8 +611,17 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
     <button class="nav-btn" id="nav-packages" onclick="showPage('packages')"><i class="fa-solid fa-box-archive"></i> Packages</button>
     <button class="nav-btn" id="nav-estimates" onclick="showPage('estimates')"><i class="fa-solid fa-file-lines"></i> Saved Estimates</button>
     <div style="flex:1;"></div>
+    <button class="nav-btn" id="nav-users" onclick="showPage('users')" style="display:none;"><i class="fa-solid fa-user-shield"></i> User Access</button>
     <button class="nav-btn" id="nav-settings" onclick="showPage('settings')"><i class="fa-solid fa-gear"></i> Studio Settings</button>
   </nav>
+  <div class="sidebar-account" id="sidebarAccount" style="display:none;">
+    <img id="acctPhoto" src="" alt="" />
+    <div class="sidebar-account-info">
+      <div class="sidebar-account-name" id="acctName"></div>
+      <div class="sidebar-account-email" id="acctEmail"></div>
+    </div>
+    <button class="sidebar-signout" onclick="signOut()" title="Sign out"><i class="fa-solid fa-right-from-bracket"></i></button>
+  </div>
 </aside>
 
 <!-- MAIN -->
@@ -715,6 +896,19 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
     </div>
   </div>
 
+  <!-- USER ACCESS (superadmin only) -->
+  <div id="page-users" class="page-content hidden">
+    <div class="topbar">
+      <div>
+        <h1 class="page-heading">User Access</h1>
+        <div class="page-sub" id="usersPageSub">Approve, revoke, or restore user access to this app</div>
+      </div>
+    </div>
+    <div class="content-area">
+      <div id="usersList"></div>
+    </div>
+  </div>
+
   <!-- STUDIO SETTINGS -->
   <div id="page-settings" class="page-content hidden">
     <div class="topbar">
@@ -929,6 +1123,37 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
 </div>
 
 <script>
+// ─── FIREBASE CONFIG ──────────────────────────────────────────────────────────
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAMzXgc2caXvSNZSQmgCidLeE1hI6RRI2k",
+  authDomain: "event-proposal-c98ce.firebaseapp.com",
+  databaseURL: "https://event-proposal-c98ce-default-rtdb.firebaseio.com",
+  projectId: "event-proposal-c98ce",
+  storageBucket: "event-proposal-c98ce.firebasestorage.app",
+  messagingSenderId: "790537320085",
+  appId: "1:790537320085:web:486e868a1bddc0f3164d9c",
+  measurementId: "G-54K8N78C6W"
+};
+
+// The superadmin gets auto-approved on first sign-in and gains access to User Access page.
+const SUPERADMIN_EMAIL = "pixelofmemories@gmail.com";
+
+let fbAuth = null;
+let fbDB = null;
+if (typeof firebase !== 'undefined') {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  fbAuth = firebase.auth();
+  fbDB = firebase.database();
+}
+
+// Current signed-in user (Firebase user object + our /users/{uid} record)
+let currentFbUser = null;     // firebase.User
+let currentUserRecord = null; // { email, name, photo, status, role, ... }
+let usersListUnsub = null;    // unsubscribe fn for /users listener (superadmin only)
+let dataListenersAttached = false;
+let userDataPaths = ['items','events','estimates','packages','settings'];
+
 // ─── DEFAULT DATA ─────────────────────────────────────────────────────────────
 
 const DEFAULT_ITEMS = [
@@ -958,43 +1183,166 @@ const DEFAULT_EVENTS = [
 // { [itemId]: { price?: number, desc?: string } }
 
 const DEFAULT_SETTINGS = {
-  name: 'FrameWork Studio',
+  name: 'Memories Photography',
   tag: 'Professional Photography & Videography',
-  phone: '+91 98400 00000',
-  email: 'hello@frameworkstudio.in',
-  website: 'frameworkstudio.in',
-  city: 'Chennai, Tamil Nadu',
+  phone: '+91 96771 74759',
+  email: 'pixelofmemories@gmail.com',
+  website: '',
+  city: 'Chennai',
   pdfTheme: 'classic',
 };
 
-function load(key, def) { try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? def : v; } catch { return def; } }
-function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+// ─── FIREBASE-BACKED DATA LAYER ───────────────────────────────────────────────
+// `dataCache` mirrors the user's data from Firebase Realtime DB in memory.
+// load()/save() operate on the cache synchronously (so existing render code keeps working).
+// Each save() also pushes to Firebase, which triggers our listeners → updates the cache
+// on this and every other signed-in device for the same user.
 
-let items = load('fw_items', DEFAULT_ITEMS);
-let events = load('fw_events', DEFAULT_EVENTS);
-let estimates = load('fw_estimates', []);
-let packages = load('fw_packages', []);
-let settings = load('fw_settings', DEFAULT_SETTINGS);
-// Migrate older settings that don't have a theme
-if (!settings.pdfTheme) settings.pdfTheme = 'classic';
+const dataCache = {};
 
-// One-time migration: ensure old single-event estimates have a sections array
-estimates.forEach(e => {
-  if (!e.sections) {
-    e.sections = [{
-      id: 'sec_' + (e.id || genId()),
-      eventTypeId: e.eventTypeId || null,
-      eventTypeName: e.eventType || 'Event',
-      eventIcon: (events.find(ev => ev.id === e.eventTypeId) || {}).icon || 'fa-calendar-day',
-      date: e.eventDate || '',
-      venue: e.venue || '',
-    }];
-    // Attach all existing line items to this single section
-    if (e.lineItems && e.lineItems.length) {
-      e.lineItems.forEach(li => { if (!li.sectionId) li.sectionId = e.sections[0].id; });
+// Translate between Firebase paths and the legacy localStorage keys still used by the code.
+const FB_PATH_BY_KEY = {
+  'fw_items':     'items',
+  'fw_events':    'events',
+  'fw_estimates': 'estimates',
+  'fw_packages':  'packages',
+  'fw_settings':  'settings',
+};
+
+function load(key, def) {
+  if (key in dataCache) return dataCache[key];
+  return def;
+}
+
+// Debounced per-key writer so typing in inputs doesn't hammer the network.
+const _writeTimers = {};
+function save(key, val) {
+  dataCache[key] = val;
+  // Don't try to write if there's no signed-in approved user (e.g. during initial bootstrap)
+  if (!currentFbUser || !currentUserRecord || currentUserRecord.status !== 'approved') return;
+  const path = FB_PATH_BY_KEY[key];
+  if (!path) return;  // unrecognized key — skip Firebase write
+  clearTimeout(_writeTimers[key]);
+  _writeTimers[key] = setTimeout(() => {
+    const ref = fbDB.ref('userData/' + currentFbUser.uid + '/' + path);
+    // Realtime DB doesn't support storing undefined; rely on val being JSON-safe.
+    // For empty arrays we still write [] explicitly.
+    ref.set(val == null ? null : val).catch(err => {
+      console.error('Firebase save failed for', key, err);
+      showToast('Sync error — check your connection', 'error');
+    });
+  }, 250);
+}
+
+// Attach real-time listeners for the approved current user.
+// Idempotent — safe to call multiple times.
+function attachUserDataListeners() {
+  if (dataListenersAttached) return;
+  if (!currentFbUser) return;
+  const uid = currentFbUser.uid;
+  userDataPaths.forEach(path => {
+    const ref = fbDB.ref('userData/' + uid + '/' + path);
+    ref.on('value', snap => {
+      const v = snap.val();
+      const cacheKey = 'fw_' + path;
+      // Bootstrap on first read: if nothing in DB yet, seed with defaults and write back.
+      if (v == null) {
+        const seed =
+          path === 'items'     ? DEFAULT_ITEMS    :
+          path === 'events'    ? DEFAULT_EVENTS   :
+          path === 'estimates' ? []               :
+          path === 'packages'  ? []               :
+          path === 'settings'  ? DEFAULT_SETTINGS :
+          null;
+        dataCache[cacheKey] = seed;
+        if (seed != null) {
+          // Persist defaults so other devices see them too
+          fbDB.ref('userData/' + uid + '/' + path).set(seed).catch(()=>{});
+        }
+      } else {
+        dataCache[cacheKey] = v;
+      }
+      onCacheUpdated(cacheKey);
+    });
+  });
+  dataListenersAttached = true;
+}
+
+function detachUserDataListeners() {
+  if (!dataListenersAttached) return;
+  if (!currentFbUser) return;
+  const uid = currentFbUser.uid;
+  userDataPaths.forEach(path => {
+    fbDB.ref('userData/' + uid + '/' + path).off();
+  });
+  dataListenersAttached = false;
+  // Clear cache so the next user starts clean
+  Object.keys(dataCache).forEach(k => delete dataCache[k]);
+}
+
+// Whenever an incoming Firebase update lands, re-render whatever's visible.
+let _rerenderTimer;
+function onCacheUpdated(_key) {
+  // Rebind top-level state vars so existing render code uses the fresh data
+  items = load('fw_items', DEFAULT_ITEMS);
+  events = load('fw_events', DEFAULT_EVENTS);
+  estimates = load('fw_estimates', []);
+  packages = load('fw_packages', []);
+  settings = load('fw_settings', DEFAULT_SETTINGS);
+  if (!settings.pdfTheme) settings.pdfTheme = 'classic';
+
+  // One-time migration for older estimates without sections (just in case)
+  estimates.forEach(e => {
+    if (!e.sections) {
+      e.sections = [{
+        id: 'sec_' + (e.id || genId()),
+        eventTypeId: e.eventTypeId || null,
+        eventTypeName: e.eventType || 'Event',
+        eventIcon: (events.find(ev => ev.id === e.eventTypeId) || {}).icon || 'fa-calendar-day',
+        date: e.eventDate || '',
+        venue: e.venue || '',
+      }];
+      if (e.lineItems && e.lineItems.length) {
+        e.lineItems.forEach(li => { if (!li.sectionId) li.sectionId = e.sections[0].id; });
+      }
+    }
+  });
+
+  // Debounce re-render of the current page so multiple incoming snapshots collapse
+  clearTimeout(_rerenderTimer);
+  _rerenderTimer = setTimeout(rerenderCurrentPage, 60);
+}
+
+function rerenderCurrentPage() {
+  applyBranding();
+  // Find currently visible page and re-trigger its render
+  const visiblePages = ['events','event-detail','event-pricing','services','estimates','estimate-form','packages','package-builder','users','settings'];
+  for (const p of visiblePages) {
+    const el = document.getElementById('page-' + p);
+    if (el && !el.classList.contains('hidden')) {
+      if (p === 'events') renderEventTiles();
+      else if (p === 'services') renderMasterList();
+      else if (p === 'estimates') renderEstimatesList();
+      else if (p === 'packages') renderPackagesList();
+      else if (p === 'settings') loadSettingsForm();
+      else if (p === 'event-detail') { /* re-render picker if state allows */
+        if (pickerEventIds && pickerEventIds.length) { renderPickerTabs(); renderPicker(); }
+      }
+      else if (p === 'event-pricing') renderOverrides();
+      else if (p === 'estimate-form') { renderSections(); renderLineItems(); recalcTotals(); }
+      else if (p === 'package-builder') { renderPkgSections(); renderPkgLineItems(); recalcPkgTotals(); }
+      else if (p === 'users') renderUserAccessPage();
+      break;
     }
   }
-});
+}
+
+// Globals — initial values are empty; populated by Firebase listeners on sign-in.
+let items = [];
+let events = [];
+let estimates = [];
+let packages = [];
+let settings = { ...DEFAULT_SETTINGS };
 
 // ─── STATE ─────────────────────────────────────────────────────────────────────
 
@@ -1052,6 +1400,7 @@ function showPage(page) {
   if (page === 'services') renderMasterList();
   if (page === 'estimates') renderEstimatesList();
   if (page === 'packages') renderPackagesList();
+  if (page === 'users') renderUserAccessPage();
   if (page === 'settings') loadSettingsForm();
 
   // Mobile: close drawer + update top bar title
@@ -1085,6 +1434,7 @@ const MOBILE_TITLES = {
   'services': 'Master library',
   'packages': 'Packages',
   'package-builder': 'Package builder',
+  'users': 'User Access',
   'settings': 'Settings',
 };
 function updateMobileTitle(page) {
@@ -2899,10 +3249,298 @@ function confirmDialog(title, msg, onConfirm) {
 }
 function closeConfirm() { document.getElementById('confirmModal').classList.add('hidden'); }
 
+// ─── AUTH & USER MANAGEMENT ───────────────────────────────────────────────────
+
+function showAuthScreen(which) {
+  ['authLoading','authSignIn','authPending','authRevoked'].forEach(id => {
+    document.getElementById(id).classList.toggle('show', id === which);
+  });
+  document.getElementById('appShell').style.display = (which == null) ? '' : 'none';
+}
+
+function signInWithGoogle() {
+  document.getElementById('authError').textContent = '';
+  const provider = new firebase.auth.GoogleAuthProvider();
+  fbAuth.signInWithPopup(provider).catch(err => {
+    console.error('Sign in failed:', err);
+    let msg = 'Sign-in failed. ';
+    if (err.code === 'auth/popup-blocked') msg += 'Please allow pop-ups for this site.';
+    else if (err.code === 'auth/popup-closed-by-user') msg = 'Sign-in cancelled.';
+    else if (err.code === 'auth/unauthorized-domain') msg += 'This domain is not authorized in Firebase. Add it under Auth → Settings → Authorized domains.';
+    else msg += (err.message || 'Try again.');
+    document.getElementById('authError').textContent = msg;
+  });
+}
+
+function signOut() {
+  // Detach listeners, clear local state, sign out
+  detachUserDataListeners();
+  if (usersListUnsub) { try { usersListUnsub(); } catch {} usersListUnsub = null; }
+  currentUserRecord = null;
+  currentFbUser = null;
+  fbAuth.signOut();
+}
+
+// Auth state observer — the heart of the gating logic.
+let _currentUserListenerOff = null;
+if (fbAuth) fbAuth.onAuthStateChanged(async (user) => {
+  // Clean up any prior /users/{uid} listener
+  if (_currentUserListenerOff) { _currentUserListenerOff(); _currentUserListenerOff = null; }
+  detachUserDataListeners();
+  if (usersListUnsub) { try { usersListUnsub(); } catch {} usersListUnsub = null; }
+  // Hide superadmin nav button by default
+  document.getElementById('nav-users').style.display = 'none';
+  document.getElementById('sidebarAccount').style.display = 'none';
+
+  if (!user) {
+    currentFbUser = null;
+    currentUserRecord = null;
+    showAuthScreen('authSignIn');
+    return;
+  }
+
+  currentFbUser = user;
+  showAuthScreen('authLoading');
+
+  // Ensure a /users/{uid} record exists; if not, create one
+  const userRef = fbDB.ref('users/' + user.uid);
+  let snap;
+  try {
+    snap = await userRef.get();
+  } catch (err) {
+    console.error('Failed to read user record:', err);
+    document.getElementById('authError').textContent = 'Database error: ' + (err.message || 'check security rules');
+    showAuthScreen('authSignIn');
+    return;
+  }
+
+  if (!snap.exists()) {
+    // First-time login — create record
+    const isSuper = (user.email || '').toLowerCase() === SUPERADMIN_EMAIL.toLowerCase();
+    const initial = {
+      email: user.email || '',
+      name: user.displayName || (user.email || '').split('@')[0] || 'User',
+      photo: user.photoURL || '',
+      status: isSuper ? 'approved' : 'pending',
+      role: isSuper ? 'superadmin' : 'user',
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      lastSeen: firebase.database.ServerValue.TIMESTAMP,
+      approvedAt: isSuper ? firebase.database.ServerValue.TIMESTAMP : null,
+      approvedBy: isSuper ? 'auto-superadmin' : null,
+    };
+    try {
+      await userRef.set(initial);
+    } catch (err) {
+      console.error('Failed to create user record:', err);
+      document.getElementById('authError').textContent = 'Could not create profile: ' + (err.message || 'permission denied');
+      showAuthScreen('authSignIn');
+      return;
+    }
+  } else {
+    // Touch lastSeen (best-effort, ignore failure since rules may prevent partial writes)
+    try { await userRef.child('lastSeen').set(firebase.database.ServerValue.TIMESTAMP); } catch {}
+    // Always refresh email/name/photo in case Google profile changed
+    try {
+      await userRef.update({
+        email: user.email || '',
+        name: user.displayName || (user.email || '').split('@')[0] || 'User',
+        photo: user.photoURL || '',
+      });
+    } catch {}
+  }
+
+  // Live-subscribe to our own record so we react instantly to admin changes (e.g. revoke)
+  const listener = (s) => {
+    const rec = s.val();
+    if (!rec) {
+      // Our record was deleted — treat as revoked
+      currentUserRecord = null;
+      showRevokedScreen(user);
+      return;
+    }
+    currentUserRecord = rec;
+    handleUserStatusChanged();
+  };
+  userRef.on('value', listener);
+  _currentUserListenerOff = () => userRef.off('value', listener);
+});
+
+function handleUserStatusChanged() {
+  if (!currentFbUser || !currentUserRecord) return;
+  const u = currentFbUser;
+  const r = currentUserRecord;
+
+  if (r.status === 'approved') {
+    // Show app shell, set up sidebar account chip, attach listeners
+    showAuthScreen(null);
+    document.getElementById('acctPhoto').src = r.photo || u.photoURL || defaultAvatar(r.name || r.email);
+    document.getElementById('acctName').textContent = r.name || u.displayName || '';
+    document.getElementById('acctEmail').textContent = r.email || u.email || '';
+    document.getElementById('sidebarAccount').style.display = '';
+    // Show superadmin nav button if applicable
+    document.getElementById('nav-users').style.display = (r.role === 'superadmin') ? '' : 'none';
+    // Begin syncing user data
+    attachUserDataListeners();
+    // Navigate to events on first approval (only if we haven't already)
+    if (!_initialPageShown) {
+      _initialPageShown = true;
+      showPage('events');
+    }
+  } else if (r.status === 'revoked') {
+    showRevokedScreen(u);
+  } else {
+    // pending or unknown -> show pending screen
+    document.getElementById('pendingPhoto').src = r.photo || u.photoURL || defaultAvatar(r.name || r.email);
+    document.getElementById('pendingEmail').textContent = r.email || u.email || '';
+    showAuthScreen('authPending');
+  }
+}
+
+function showRevokedScreen(u) {
+  document.getElementById('revokedPhoto').src = (u && u.photoURL) || (currentUserRecord && currentUserRecord.photo) || defaultAvatar((currentUserRecord && (currentUserRecord.name || currentUserRecord.email)) || (u && u.email) || '');
+  document.getElementById('revokedEmail').textContent = (u && u.email) || (currentUserRecord && currentUserRecord.email) || '';
+  showAuthScreen('authRevoked');
+}
+
+function defaultAvatar(seed) {
+  // Tiny inline SVG fallback with the first letter
+  const letter = (seed || '?').trim().charAt(0).toUpperCase() || '?';
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><rect width='40' height='40' fill='%232B4C3F'/><text x='20' y='25' fill='white' font-family='sans-serif' font-size='18' font-weight='600' text-anchor='middle'>${letter}</text></svg>`;
+  return 'data:image/svg+xml;utf8,' + svg;
+}
+
+let _initialPageShown = false;
+
+// ─── USER ACCESS PAGE (superadmin only) ───────────────────────────────────────
+
+function renderUserAccessPage() {
+  if (!currentUserRecord || currentUserRecord.role !== 'superadmin') {
+    document.getElementById('usersList').innerHTML =
+      `<div class="empty-state"><i class="fa-solid fa-lock"></i><h3>Not authorized</h3><p>This page is for the superadmin only.</p></div>`;
+    return;
+  }
+  // Subscribe to /users if we haven't already (idempotent: detach then re-attach)
+  if (usersListUnsub) { try { usersListUnsub(); } catch {} usersListUnsub = null; }
+  const ref = fbDB.ref('users');
+  const listener = ref.on('value', snap => {
+    const all = snap.val() || {};
+    const arr = Object.keys(all).map(uid => ({ uid, ...all[uid] }));
+    drawUsersList(arr);
+  }, err => {
+    console.error('Users list listen failed:', err);
+    document.getElementById('usersList').innerHTML = `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><h3>Couldn't load users</h3><p>${escapeHtml(err.message || '')}</p></div>`;
+  });
+  usersListUnsub = () => ref.off('value', listener);
+}
+
+function drawUsersList(arr) {
+  const el = document.getElementById('usersList');
+  const sub = document.getElementById('usersPageSub');
+  if (!arr.length) {
+    el.innerHTML = `<div class="empty-state"><i class="fa-solid fa-user-shield"></i><h3>No users yet</h3><p>You're the only one signed in.</p></div>`;
+    sub.textContent = '0 users';
+    return;
+  }
+  arr.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const pending = arr.filter(u => u.status === 'pending');
+  const approved = arr.filter(u => u.status === 'approved');
+  const revoked = arr.filter(u => u.status === 'revoked');
+  sub.textContent = `${arr.length} user${arr.length===1?'':'s'} · ${pending.length} pending · ${approved.length} approved · ${revoked.length} revoked`;
+
+  const renderRow = (u) => {
+    const isSelf = currentFbUser && u.uid === currentFbUser.uid;
+    const isSuper = u.role === 'superadmin';
+    const seenStr = u.lastSeen ? formatRelTime(u.lastSeen) : '—';
+    const createdStr = u.createdAt ? formatDate(new Date(u.createdAt).toISOString()) : '—';
+    let actions = '';
+    if (isSelf) {
+      actions = `<span style="font-size:11px;color:var(--text3);padding:8px 6px;">That's you</span>`;
+    } else if (isSuper) {
+      actions = `<span style="font-size:11px;color:var(--text3);padding:8px 6px;">Locked</span>`;
+    } else if (u.status === 'pending') {
+      actions = `
+        <button class="btn btn-sm btn-primary" onclick="setUserStatus('${u.uid}','approved')"><i class="fa-solid fa-check"></i> Approve</button>
+        <button class="btn btn-sm btn-danger" onclick="setUserStatus('${u.uid}','revoked')"><i class="fa-solid fa-xmark"></i> Reject</button>`;
+    } else if (u.status === 'approved') {
+      actions = `<button class="btn btn-sm btn-danger" onclick="setUserStatus('${u.uid}','revoked')"><i class="fa-solid fa-ban"></i> Revoke access</button>`;
+    } else if (u.status === 'revoked') {
+      actions = `<button class="btn btn-sm btn-primary" onclick="setUserStatus('${u.uid}','approved')"><i class="fa-solid fa-rotate-left"></i> Restore</button>`;
+    }
+    const photo = u.photo || defaultAvatar(u.name || u.email || u.uid);
+    return `<div class="user-row">
+      <img src="${escapeAttr(photo)}" alt="" onerror="this.src='${defaultAvatar(u.name || u.email || u.uid)}'" />
+      <div class="user-row-info">
+        <div class="user-row-name">${escapeHtml(u.name || '(no name)')}${isSuper ? '<span class="role-badge">Superadmin</span>' : ''}</div>
+        <div class="user-row-email">${escapeHtml(u.email || '')}</div>
+        <div class="user-row-meta">Joined ${createdStr} · Last seen ${seenStr}</div>
+      </div>
+      <div class="user-row-actions">${actions}</div>
+    </div>`;
+  };
+
+  const section = (label, list) => {
+    if (!list.length) return '';
+    return `<div class="user-section-head">${label} <span class="count">${list.length}</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">${list.map(renderRow).join('')}</div>`;
+  };
+
+  el.innerHTML = section('Pending', pending) + section('Approved', approved) + section('Revoked', revoked);
+}
+
+function setUserStatus(uid, newStatus) {
+  if (!currentUserRecord || currentUserRecord.role !== 'superadmin') return;
+  if (uid === (currentFbUser && currentFbUser.uid)) {
+    showToast("You can't change your own access", 'error');
+    return;
+  }
+  const msg = newStatus === 'approved' ? 'Approve this user?' :
+              newStatus === 'revoked'  ? 'Revoke this user\'s access? They will lose access immediately.' : '';
+  const confirmFn = newStatus === 'revoked' ? confirmDialog : null;
+  const doIt = () => {
+    const updates = { status: newStatus };
+    if (newStatus === 'approved') {
+      updates.approvedAt = firebase.database.ServerValue.TIMESTAMP;
+      updates.approvedBy = currentFbUser.email || currentFbUser.uid;
+    }
+    fbDB.ref('users/' + uid).update(updates)
+      .then(() => showToast(newStatus === 'approved' ? 'User approved' : (newStatus === 'revoked' ? 'Access revoked' : 'Updated')))
+      .catch(err => showToast('Failed: ' + (err.message || err), 'error'));
+  };
+  if (confirmFn) confirmFn('Revoke access?', msg, doIt);
+  else doIt();
+}
+
+function formatRelTime(ms) {
+  const diff = Date.now() - ms;
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  const d = Math.floor(h / 24);
+  if (d < 30) return d + 'd ago';
+  return formatDate(new Date(ms).toISOString());
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
-applyBranding();
-showPage('events');
+// Auth observer (above) handles the page navigation. Just show the loading screen
+// initially; everything else is event-driven.
+showAuthScreen('authLoading');
+
+// Safety: if Firebase fails to initialize within 10s, show a friendly error.
+setTimeout(() => {
+  if (typeof firebase === 'undefined') {
+    const card = document.querySelector('#authLoading .auth-card');
+    if (card) {
+      card.innerHTML = `
+        <div style="font-size:32px;color:var(--danger);margin-bottom:14px;"><i class="fa-solid fa-circle-exclamation"></i></div>
+        <h2 class="auth-title" style="font-size:20px;">Connection problem</h2>
+        <div class="auth-sub">Couldn't reach Firebase. Check your internet connection and try refreshing.</div>
+        <button class="btn" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Refresh</button>`;
+    }
+  }
+}, 10000);
 
 // On viewport changes (rotate, resize across mobile/desktop boundary), re-render
 // any page that has size-dependent layouts (line items, override matrix, etc.)
@@ -2911,7 +3549,6 @@ window.addEventListener('resize', () => {
   const nowMobile = isMobile();
   if (nowMobile === _lastMobile) return;
   _lastMobile = nowMobile;
-  // Re-render any currently visible page that has mobile-specific layouts
   if (!document.getElementById('page-estimate-form').classList.contains('hidden')) {
     renderSections();
     renderLineItems();
