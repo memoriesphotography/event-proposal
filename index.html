@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FrameWork Studio — Estimates</title>
+<title>Memories Photography — Estimates</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -593,7 +593,7 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
 <!-- Mobile top app bar (hidden on desktop) -->
 <div class="mobile-bar">
   <button class="mobile-bar-burger" onclick="toggleSidebar()" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
-  <div class="mobile-bar-title" id="mobileBarTitle">FrameWork</div>
+  <div class="mobile-bar-title" id="mobileBarTitle">Memories Photography</div>
 </div>
 
 <!-- Backdrop for sidebar (mobile only) -->
@@ -602,7 +602,7 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
 <!-- SIDEBAR -->
 <aside class="sidebar" id="appSidebar">
   <div class="sidebar-logo">
-    <h2 id="sb_name">FrameWork</h2>
+    <h2 id="sb_name">Memories Photography</h2>
     <span id="sb_tag">Studio Estimates</span>
   </div>
   <nav class="sidebar-nav">
@@ -1007,13 +1007,8 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
         </div>
         <div class="form-row">
           <div class="field"><label>Category</label>
-            <select id="it_cat">
-              <option>Photography</option>
-              <option>Videography</option>
-              <option>Albums</option>
-              <option>Prints</option>
-              <option>Digital</option>
-              <option>Add-ons</option>
+            <select id="it_cat" onchange="onCategorySelectChanged(this)">
+              <!-- populated dynamically when modal opens -->
             </select>
           </div>
           <div class="field"><label>Default price (₹)</label><input type="number" id="it_price" placeholder="15000" min="0" /></div>
@@ -1441,7 +1436,7 @@ const MOBILE_TITLES = {
 function updateMobileTitle(page) {
   const t = document.getElementById('mobileBarTitle');
   if (!t) return;
-  t.textContent = MOBILE_TITLES[page] || (settings.name || 'FrameWork');
+  t.textContent = MOBILE_TITLES[page] || (settings.name || 'Memories Photography');
 }
 
 // ─── EVENT TILES ──────────────────────────────────────────────────────────────
@@ -1857,12 +1852,63 @@ function renderMasterList() {
     renderTbl(postProductions, 'Post-production', 'Internal items — appear in your estimate totals but never on the client PDF.');
 }
 
+// Build the category <select>'s options from the current items, with a final
+// "+ Add new category…" entry. `selectedCategory` is the value to pre-select
+// (used when editing or when the user just added a new one).
+function refreshItemCategoryOptions(selectedCategory) {
+  const sel = document.getElementById('it_cat');
+  // Distinct, non-empty categories from existing items, alphabetical
+  const used = Array.from(new Set(items.map(i => (i.category || '').trim()).filter(Boolean))).sort((a,b) => a.localeCompare(b));
+
+  // If we're pre-selecting one that isn't yet in the list (a freshly typed new category), include it
+  if (selectedCategory && !used.includes(selectedCategory)) {
+    used.push(selectedCategory);
+    used.sort((a,b) => a.localeCompare(b));
+  }
+
+  // Seed defaults the very first time (no items at all → empty dropdown is unfriendly)
+  const SEED = ['Photography', 'Videography', 'Albums', 'Prints', 'Digital', 'Add-ons'];
+  const finalList = used.length ? used : SEED;
+
+  let html = finalList.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
+  html += `<option value="__ADD_NEW__" style="font-style:italic;color:var(--accent);">+ Add new category…</option>`;
+  sel.innerHTML = html;
+
+  // Set selection
+  if (selectedCategory && finalList.includes(selectedCategory)) {
+    sel.value = selectedCategory;
+  } else if (finalList.length) {
+    sel.value = finalList[0];
+  }
+}
+
+// Fires when the dropdown value changes. If user picks the special "+ Add new"
+// entry, prompt for a name and add it (or revert if they cancel).
+function onCategorySelectChanged(selectEl) {
+  if (selectEl.value !== '__ADD_NEW__') return;
+  const name = prompt('New category name:');
+  if (name === null) {
+    // Cancelled — revert to the first real option
+    refreshItemCategoryOptions(null);
+    return;
+  }
+  const trimmed = name.trim();
+  if (!trimmed) {
+    showToast('Category name cannot be empty', 'error');
+    refreshItemCategoryOptions(null);
+    return;
+  }
+  // Re-render the dropdown with the new category included and selected.
+  // It only persists once the user saves the item (since categories are derived from items).
+  refreshItemCategoryOptions(trimmed);
+}
+
 function openItemModal() {
   editingItemId = null;
   document.getElementById('itemModalTitle').textContent = 'Add item';
   document.getElementById('it_name').value = '';
   document.getElementById('it_kind').value = 'service';
-  document.getElementById('it_cat').value = 'Photography';
+  refreshItemCategoryOptions(null);
   document.getElementById('it_price').value = '';
   document.getElementById('it_desc').value = '';
   document.getElementById('it_deleteBtn').style.display = 'none';
@@ -1875,7 +1921,7 @@ function openEditItem(id) {
   document.getElementById('itemModalTitle').textContent = 'Edit item';
   document.getElementById('it_name').value = it.name;
   document.getElementById('it_kind').value = it.kind;
-  document.getElementById('it_cat').value = it.category;
+  refreshItemCategoryOptions(it.category);
   document.getElementById('it_price').value = it.price;
   document.getElementById('it_desc').value = it.desc || '';
   document.getElementById('it_deleteBtn').style.display = '';
@@ -1885,10 +1931,16 @@ function closeItemModal() { document.getElementById('itemModal').classList.add('
 function saveItem() {
   const name = document.getElementById('it_name').value.trim();
   if (!name) { showToast('Please enter a name', 'error'); return; }
+  const category = document.getElementById('it_cat').value.trim();
+  // Defensive: should never be __ADD_NEW__ here (handler replaces it), but just in case
+  if (!category || category === '__ADD_NEW__') {
+    showToast('Please pick a category', 'error');
+    return;
+  }
   const data = {
     name,
     kind: document.getElementById('it_kind').value,
-    category: document.getElementById('it_cat').value,
+    category,
     price: parseFloat(document.getElementById('it_price').value) || 0,
     desc: document.getElementById('it_desc').value.trim(),
   };
@@ -3254,7 +3306,7 @@ function startFromPackage(packageId) {
 // ─── STUDIO SETTINGS ──────────────────────────────────────────────────────────
 
 function applyBranding() {
-  const name = (settings.name || 'FrameWork').trim();
+  const name = (settings.name || 'Memories Photography').trim();
   const tag = (settings.tag || 'Studio Estimates').trim();
   document.getElementById('sb_name').textContent = name;
   document.getElementById('sb_tag').textContent = tag || 'Studio Estimates';
