@@ -1,0 +1,2926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FrameWork Studio — Estimates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --bg: #F7F5F0;
+  --surface: #FFFFFF;
+  --surface2: #F0EDE6;
+  --border: #E2DDD5;
+  --border2: #CCC8BF;
+  --text: #1A1814;
+  --text2: #6B6760;
+  --text3: #A8A49E;
+  --accent: #2B4C3F;
+  --accent-dark: #1e3830;
+  --accent-light: #E8F0ED;
+  --accent2: #C4813A;
+  --accent2-light: #FBF3E8;
+  --danger: #C0392B;
+  --danger-light: #FDECEA;
+  --success: #2B6B4C;
+  --radius: 12px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
+
+/* LAYOUT */
+.app { display: flex; min-height: 100vh; }
+.sidebar { width: 220px; background: var(--accent); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar-logo { padding: 26px 22px 20px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+.sidebar-logo h2 { font-size: 19px; color: #fff; line-height: 1.2; }
+.sidebar-logo span { font-size: 10px; color: rgba(255,255,255,0.5); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 3px; display: block; }
+.sidebar-nav { padding: 14px 10px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.nav-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.65); border: none; background: none; width: 100%; text-align: left; transition: all 0.15s; font-family: inherit; }
+.nav-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.nav-btn.active { background: rgba(255,255,255,0.15); color: #fff; font-weight: 500; }
+.nav-btn i { width: 16px; text-align: center; font-size: 14px; }
+
+/* MAIN */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.page-heading { font-size: 24px; color: var(--text); line-height: 1.2; }
+.page-sub { font-size: 12px; color: var(--text3); margin-top: 3px; }
+.topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.content-area { padding: 28px; flex: 1; overflow-y: auto; }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--surface); font-size: 13px; cursor: pointer; color: var(--text); font-family: inherit; transition: all 0.15s; }
+.btn:hover { background: var(--surface2); }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+.btn-sm { padding: 6px 11px; font-size: 12px; }
+.btn-danger { color: var(--danger); border-color: #f0bbb6; }
+.btn-danger:hover { background: var(--danger-light); }
+.btn-ghost { border-color: transparent; background: transparent; }
+.btn-ghost:hover { background: var(--surface2); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* CARDS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+.card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.card-title { font-size: 14px; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 8px; }
+
+/* FORM */
+.form-grid { display: grid; gap: 14px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 10px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.07em; }
+.field input, .field select, .field textarea {
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 13px; background: var(--surface); color: var(--text); font-family: inherit;
+  transition: border-color 0.15s; outline: none;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+
+/* EVENT TILES */
+.event-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+.event-tile {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px 22px; cursor: pointer; transition: all 0.2s;
+  display: flex; flex-direction: column; gap: 8px;
+  position: relative; overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.event-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--accent); }
+.event-tile-icon { width: 44px; height: 44px; border-radius: 10px; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 19px; margin-bottom: 8px; }
+.event-tile-name { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); line-height: 1.15; }
+.event-tile-meta { font-size: 11px; color: var(--text3); margin-top: auto; padding-top: 12px; display: flex; gap: 14px; }
+.event-tile-meta span { display: inline-flex; align-items: center; gap: 5px; }
+.event-tile.add { border-style: dashed; background: transparent; box-shadow: none; align-items: center; justify-content: center; color: var(--text2); }
+.event-tile.add:hover { border-color: var(--accent); color: var(--accent); transform: none; }
+.event-tile.add i { font-size: 24px; margin-bottom: 4px; }
+.event-tile-menu { position: absolute; top: 12px; right: 12px; opacity: 0; transition: opacity 0.15s; }
+.event-tile:hover .event-tile-menu { opacity: 1; }
+.event-tile-menu button { background: var(--surface2); border: 1px solid var(--border); width: 28px; height: 28px; border-radius: 6px; cursor: pointer; color: var(--text2); display: inline-flex; align-items: center; justify-content: center; }
+.event-tile-menu button:hover { background: var(--accent-light); color: var(--accent); }
+
+/* PICKER (services / deliverables grid) */
+.picker-section { margin-bottom: 22px; }
+.picker-section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.picker-section-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); }
+.picker-section-count { font-size: 11px; color: var(--text3); }
+.picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.picker-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 14px 16px; cursor: pointer; transition: all 0.15s;
+  display: flex; flex-direction: column; gap: 6px; position: relative;
+}
+.picker-card:hover { border-color: var(--accent); }
+.picker-card.selected { border-color: var(--accent); background: var(--accent-light); }
+.picker-card.selected::after {
+  content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+  position: absolute; top: 12px; right: 14px; color: var(--accent); font-size: 12px;
+}
+.picker-card-name { font-size: 13px; font-weight: 500; color: var(--text); padding-right: 24px; }
+.picker-card-desc { font-size: 11px; color: var(--text3); line-height: 1.45; }
+.picker-card-price { font-size: 12px; color: var(--accent); font-weight: 500; margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+/* MASTER SERVICES TABLE */
+.svc-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.svc-table th { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; padding: 12px 16px; background: var(--surface2); text-align: left; border-bottom: 1px solid var(--border); }
+.svc-table th.num { text-align: right; }
+.svc-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.svc-table tr:last-child td { border-bottom: none; }
+.svc-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.svc-table tr.cat-row td { background: var(--surface2); font-size: 10px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 16px; }
+.svc-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.svc-desc { font-size: 11px; color: var(--text3); margin-top: 3px; line-height: 1.5; }
+
+/* OVERRIDE TABLE (event-specific) */
+.override-table { width: 100%; border-collapse: collapse; }
+.override-table th { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; padding: 10px 12px; background: var(--surface2); text-align: left; border-bottom: 1px solid var(--border); }
+.override-table th.num { text-align: right; }
+.override-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.override-table td.num { text-align: right; }
+.override-table tr.cat-row td { background: var(--surface2); font-size: 10px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; padding: 6px 12px; }
+.override-input { width: 110px; text-align: right; padding: 6px 9px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; font-family: inherit; color: var(--text); background: var(--surface); font-variant-numeric: tabular-nums; }
+.override-input:focus { border-color: var(--accent); outline: none; }
+.override-desc-input { width: 100%; padding: 6px 9px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; font-family: inherit; color: var(--text2); background: var(--surface); resize: vertical; min-height: 32px; line-height: 1.4; }
+.override-desc-input:focus { border-color: var(--accent); outline: none; }
+
+/* ESTIMATE FORM TABLE */
+.line-table { width: 100%; border-collapse: collapse; }
+.line-table th { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; padding: 10px 12px; background: var(--surface2); text-align: left; border-bottom: 1px solid var(--border); }
+.line-table th.num { text-align: right; }
+.line-table th.ctr { text-align: center; }
+.line-table td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.line-table tr.cat-row td { background: var(--surface2); font-size: 10px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; padding: 6px 12px; }
+.line-name-input { width: 100%; padding: 7px 10px; border: 1px solid transparent; background: transparent; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; font-family: inherit; color: var(--text); }
+.line-name-input:focus, .line-name-input:hover { border-color: var(--border); background: var(--surface); outline: none; }
+.line-desc-input { width: 100%; padding: 6px 10px; border: 1px solid transparent; background: transparent; border-radius: var(--radius-sm); font-size: 11px; font-family: inherit; color: var(--text2); resize: vertical; min-height: 30px; line-height: 1.5; margin-top: 4px; }
+.line-desc-input:focus, .line-desc-input:hover { border-color: var(--border); background: var(--surface); outline: none; }
+.line-kind-select { padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 11px; font-family: inherit; color: var(--text2); background: var(--surface); cursor: pointer; flex-shrink: 0; }
+.line-kind-select:focus { border-color: var(--accent); outline: none; }
+
+/* PDF theme picker cards */
+.theme-card { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; gap: 8px; background: var(--surface); }
+.theme-card:hover { border-color: var(--accent); }
+.theme-card.selected { border-color: var(--accent); background: var(--accent-light); }
+.theme-card-swatch { display: flex; gap: 4px; height: 32px; border-radius: 4px; overflow: hidden; }
+.theme-card-name { font-size: 13px; font-weight: 500; color: var(--text); display: flex; align-items: center; justify-content: space-between; }
+.theme-card-desc { font-size: 11px; color: var(--text3); line-height: 1.45; }
+.qty-input { width: 60px; text-align: center; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; font-family: inherit; color: var(--text); background: var(--surface); font-variant-numeric: tabular-nums; }
+.qty-input:focus { border-color: var(--accent); outline: none; }
+.price-input { width: 110px; text-align: right; padding: 6px 9px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; font-family: inherit; color: var(--text); background: var(--surface); font-variant-numeric: tabular-nums; }
+.price-input:focus { border-color: var(--accent); outline: none; }
+.line-total { font-size: 13px; font-weight: 500; color: var(--text); text-align: right; min-width: 90px; font-variant-numeric: tabular-nums; padding-top: 7px; }
+.row-del { background: none; border: none; color: var(--text3); cursor: pointer; padding: 6px; border-radius: 4px; }
+.row-del:hover { background: var(--danger-light); color: var(--danger); }
+
+/* TOTAL BAR */
+.totals { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 22px; display: flex; justify-content: flex-end; gap: 32px; align-items: center; margin-top: 18px; flex-wrap: wrap; }
+.total-block { text-align: right; }
+.total-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; }
+.total-value { font-size: 15px; font-weight: 500; color: var(--text); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.total-grand .total-value { font-size: 26px; font-family: 'DM Serif Display', serif; font-weight: 400; }
+.total-divider { width: 1px; height: 32px; background: var(--border2); }
+
+/* MODAL */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(26,24,20,0.45); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+.modal-backdrop.hidden { display: none; }
+.modal { background: var(--surface); border-radius: var(--radius); width: 100%; max-width: 480px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.18); }
+.modal-head { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-title { font-size: 19px; color: var(--text); }
+.modal-body { padding: 22px 24px; flex: 1; overflow-y: auto; }
+.modal-foot { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: #fff; padding: 11px 18px; border-radius: var(--radius-sm); font-size: 13px; display: flex; align-items: center; gap: 8px; z-index: 200; box-shadow: 0 8px 24px rgba(0,0,0,0.2); animation: slide-in 0.25s; }
+@keyframes slide-in { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.toast.error { background: var(--danger); }
+
+/* MISC */
+.hidden { display: none !important; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
+.empty-state i { font-size: 36px; margin-bottom: 14px; opacity: 0.5; }
+.empty-state h3 { font-size: 17px; color: var(--text2); margin-bottom: 6px; }
+.empty-state p { font-size: 13px; }
+.breadcrumb { font-size: 12px; color: var(--text3); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.breadcrumb a { color: var(--text2); cursor: pointer; }
+.breadcrumb a:hover { color: var(--accent); }
+.section-spacer { height: 24px; }
+.tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.tab { padding: 10px 16px; font-size: 13px; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+.info-banner { background: var(--accent2-light); border: 1px solid #ecd9b8; border-radius: var(--radius-sm); padding: 12px 16px; font-size: 12px; color: #7a5021; display: flex; gap: 10px; align-items: flex-start; line-height: 1.5; }
+.info-banner i { color: var(--accent2); margin-top: 2px; }
+
+/* Mobile menu trigger — hidden on desktop */
+.mobile-bar { display: none; }
+.sidebar-backdrop { display: none; }
+.mobile-only { display: none; }
+
+/* ─── MOBILE STYLES ─────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  /* App layout: sidebar becomes off-canvas */
+  body { font-size: 15px; }
+  .app { display: block; }
+  .main { padding-top: 56px; min-width: 0; }
+  .mobile-bar {
+    display: flex; align-items: center; gap: 10px;
+    position: fixed; top: 0; left: 0; right: 0; height: 56px;
+    background: var(--accent); color: #fff; padding: 0 14px;
+    z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .mobile-bar-burger {
+    background: none; border: none; color: #fff; width: 40px; height: 40px;
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px;
+  }
+  .mobile-bar-burger:active { background: rgba(255,255,255,0.15); }
+  .mobile-bar-title { font-size: 16px; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .desktop-only { display: none !important; }
+  .mobile-only { display: initial; }
+
+  /* Sidebar slides in from left */
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
+    transform: translateX(-100%); transition: transform 0.25s ease;
+    z-index: 60; padding-top: 0;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 55; opacity: 0; transition: opacity 0.2s;
+  }
+  .sidebar-backdrop.open { display: block; opacity: 1; }
+
+  /* Topbars: stack title above actions */
+  .topbar {
+    flex-direction: column; align-items: stretch; gap: 12px;
+    padding: 14px 16px;
+  }
+  .topbar > div:first-child { min-width: 0; }
+  .page-heading { font-size: 20px; }
+  .topbar-actions { width: 100%; display: flex; flex-wrap: wrap; gap: 6px; }
+  .topbar-actions .btn { flex: 1 1 auto; justify-content: center; min-width: 0; }
+
+  .content-area { padding: 16px; }
+
+  /* Cards: tighter padding */
+  .card { padding: 16px; border-radius: 10px; }
+  .card-head { margin-bottom: 12px; padding-bottom: 10px; }
+
+  /* Forms: single column */
+  .form-row, .form-row-3 { grid-template-columns: 1fr; gap: 12px; }
+  .field input, .field select, .field textarea {
+    font-size: 16px;   /* prevents iOS zoom on focus */
+    padding: 12px 13px;
+  }
+
+  /* Buttons: bigger tap targets */
+  .btn { padding: 11px 14px; font-size: 14px; min-height: 42px; }
+  .btn-sm { padding: 8px 12px; min-height: 36px; }
+
+  /* Event tiles: 2 per row, tighter */
+  .event-tiles { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .event-tile { padding: 16px 14px; min-height: 130px; }
+  .event-tile-icon { width: 36px; height: 36px; font-size: 16px; }
+  .event-tile-name { font-size: 17px; }
+  .event-tile-meta { flex-direction: column; gap: 4px; font-size: 10px; padding-top: 8px; }
+  .event-tile.add i { font-size: 20px; }
+
+  /* Picker grid: 1 per row */
+  .picker-grid { grid-template-columns: 1fr; gap: 10px; }
+  .picker-card { padding: 14px 16px; }
+  .picker-card-name { font-size: 14px; }
+  .picker-card-desc { font-size: 12px; }
+  .picker-card-price { font-size: 13px; }
+
+  /* Tabs: scroll horizontally if needed */
+  #multiEventTabs { overflow-x: auto; flex-wrap: nowrap !important; }
+  .tab { white-space: nowrap; padding: 12px 14px; flex-shrink: 0; }
+
+  /* Multi-event tray */
+  #multiTray { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px; }
+  #multiTray > div { width: 100%; }
+
+  /* Master library table -> cards */
+  .svc-table thead { display: none; }
+  .svc-table, .svc-table tbody, .svc-table tr, .svc-table td { display: block; width: 100%; }
+  .svc-table tr { border-bottom: 1px solid var(--border); padding: 12px 14px; }
+  .svc-table tr:last-child { border-bottom: none; }
+  .svc-table tr.cat-row { padding: 8px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .svc-table tr.cat-row td { padding: 0; background: transparent; }
+  .svc-table td { padding: 4px 0; border-bottom: none; }
+  .svc-table td.num { text-align: left; font-weight: 500; color: var(--accent); }
+  .svc-table td.svc-price-cell::before { content: 'Price: '; color: var(--text3); font-weight: 400; }
+  .svc-table td.svc-action-cell { width: auto !important; padding-top: 8px; }
+  .svc-table td.svc-action-cell .btn { width: 100%; }
+
+  /* Configure prices override matrix -> cards */
+  .override-table thead { display: none; }
+  .override-table, .override-table tbody, .override-table tr, .override-table td { display: block; width: 100%; }
+  .override-table tr { border-bottom: 1px solid var(--border); padding: 12px 14px; }
+  .override-table tr.cat-row { padding: 8px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .override-table tr.cat-row td { padding: 0; background: transparent; }
+  .override-table td { padding: 6px 0; border-bottom: none; text-align: left !important; }
+  .override-input { width: 100% !important; font-size: 16px; padding: 10px 13px; }
+  .override-desc-input { font-size: 14px; padding: 10px 13px; }
+
+  /* Estimate form line items table -> cards */
+  .line-table thead { display: none; }
+  .line-table, .line-table tbody, .line-table tr, .line-table td { display: block; width: 100%; }
+  .line-table tr.cat-row {
+    background: var(--accent-light) !important;
+    border-radius: 8px; margin-top: 14px; padding: 10px 12px !important;
+  }
+  .line-table tr.cat-row td { padding: 0 !important; background: transparent !important; }
+  /* Line items section header (event row) — stack add-button below name */
+  .line-table tr.cat-row .btn-sm { display: block !important; margin: 8px 0 0 !important; width: 100% !important; float: none !important; }
+  .line-table tr:not(.cat-row) {
+    border-bottom: 1px solid var(--border); padding: 12px 0;
+  }
+  .line-table tr:not(.cat-row) td { padding: 4px 0; border-bottom: none; text-align: left !important; }
+  /* Mobile line-item card structure (injected by JS-rendered HTML — see renderLineItems mobile branch) */
+  .line-card { padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .line-card-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .line-card-row > div { flex: 1; min-width: 0; }
+  .line-card-row label { font-size: 11px; color: var(--text3); display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .line-card .line-name-input { font-size: 15px; width: 100%; }
+  .line-card .line-desc-input { font-size: 13px; width: 100%; margin-top: 6px; }
+  .line-card .line-kind-select { font-size: 13px; padding: 8px 10px; min-height: 36px; }
+  .line-card .qty-input, .line-card .price-input { width: 100%; text-align: left; font-size: 15px; padding: 9px 11px; }
+  .line-card .line-total { font-size: 16px; text-align: right; font-weight: 600; color: var(--accent); padding: 0; }
+  .line-card .row-del-btn { width: 100%; padding: 9px; border: 1px solid #f0bbb6; background: transparent; color: var(--danger); border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .line-card .row-del-btn:active { background: var(--danger-light); }
+
+  /* Totals: stack */
+  .totals { flex-direction: column; align-items: stretch; gap: 12px; padding: 14px 16px; }
+  .total-block { text-align: left; display: flex; justify-content: space-between; align-items: center; }
+  .total-divider { display: none; }
+  .total-grand .total-value { font-size: 22px; }
+
+  /* Estimates list: stack vertically inside the card */
+  #estimatesList .card,
+  #packagesList .card {
+    flex-direction: row; flex-wrap: wrap; align-items: flex-start;
+    padding: 14px 16px;
+  }
+  #estimatesList .card > div:first-child,
+  #packagesList .card > div:first-child { flex-shrink: 0; }
+  #estimatesList .card > div:nth-child(2),
+  #packagesList .card > div:nth-child(2) { flex: 1; min-width: 0; }
+  /* Push amount + buttons to a new row below name */
+  #estimatesList .card > div:nth-child(3),
+  #packagesList .card > div:nth-child(3) {
+    text-align: left; margin-top: 8px; flex-basis: 100%;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  #estimatesList .card > button,
+  #packagesList .card > button {
+    flex-basis: auto;
+  }
+
+  /* Modals: more breathing room */
+  .modal-backdrop { padding: 8px; }
+  .modal { max-height: 95vh; max-width: 100% !important; }
+  .modal-head { padding: 16px 18px; }
+  .modal-title { font-size: 17px; }
+  .modal-body { padding: 16px 18px; }
+  .modal-foot { padding: 12px 18px; flex-wrap: wrap; gap: 8px; }
+  .modal-foot .btn { flex: 1 1 auto; min-width: 0; justify-content: center; }
+  .modal-foot .btn[style*="margin-right:auto"] { flex-basis: 100%; margin-right: 0 !important; order: -1; }
+
+  /* Breadcrumb tap target */
+  .breadcrumb a { padding: 6px 0; display: inline-block; }
+
+  /* Theme card grid */
+  #themeChooser { grid-template-columns: 1fr !important; }
+
+  /* Section cards in form */
+  #sectionsArea .form-row { gap: 10px; }
+
+  /* Picker section heads stack */
+  .picker-section-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+  /* Confirm modal: tighter buttons */
+  #confirmModal .modal { max-width: 320px !important; }
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Mobile top app bar (hidden on desktop) -->
+<div class="mobile-bar">
+  <button class="mobile-bar-burger" onclick="toggleSidebar()" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
+  <div class="mobile-bar-title" id="mobileBarTitle">FrameWork</div>
+</div>
+
+<!-- Backdrop for sidebar (mobile only) -->
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="appSidebar">
+  <div class="sidebar-logo">
+    <h2 id="sb_name">FrameWork</h2>
+    <span id="sb_tag">Studio Estimates</span>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="nav-btn" id="nav-events" onclick="showPage('events')"><i class="fa-solid fa-grip"></i> Events</button>
+    <button class="nav-btn" id="nav-services" onclick="showPage('services')"><i class="fa-solid fa-list-check"></i> Master Library</button>
+    <button class="nav-btn" id="nav-packages" onclick="showPage('packages')"><i class="fa-solid fa-box-archive"></i> Packages</button>
+    <button class="nav-btn" id="nav-estimates" onclick="showPage('estimates')"><i class="fa-solid fa-file-lines"></i> Saved Estimates</button>
+    <div style="flex:1;"></div>
+    <button class="nav-btn" id="nav-settings" onclick="showPage('settings')"><i class="fa-solid fa-gear"></i> Studio Settings</button>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- EVENTS PAGE (tiles) -->
+  <div id="page-events" class="page-content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-heading">Start a new estimate</h1>
+        <div class="page-sub" id="eventsPageSub">Pick an event type to begin — or click "Multi-event" to combine several into one estimate</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn" onclick="openPackagePicker()"><i class="fa-solid fa-box-archive"></i> Start from package</button>
+        <button class="btn" id="multiToggleBtn" onclick="toggleMultiMode()"><i class="fa-solid fa-layer-group"></i> Multi-event</button>
+        <button class="btn" onclick="openEventModal()"><i class="fa-solid fa-plus"></i> New event type</button>
+      </div>
+    </div>
+    <div class="content-area">
+      <div class="event-tiles" id="eventTiles"></div>
+      <!-- Multi-event tray -->
+      <div id="multiTray" class="hidden" style="position:sticky;bottom:0;margin-top:24px;background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius);padding:14px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 -4px 16px rgba(0,0,0,0.06);">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;">Building multi-event estimate</div>
+          <div id="multiTrayList" style="font-size:14px;color:var(--text);margin-top:4px;font-weight:500;">No events selected</div>
+        </div>
+        <button class="btn" onclick="clearMultiSelection()">Clear</button>
+        <button class="btn btn-primary" id="multiContinueBtn" onclick="continueMultiSelection()" disabled><i class="fa-solid fa-arrow-right"></i> Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVENT DETAIL: pick services + deliverables (supports multiple events via tabs) -->
+  <div id="page-event-detail" class="page-content hidden">
+    <div class="topbar">
+      <div>
+        <div class="breadcrumb"><a onclick="showPage('events')"><i class="fa-solid fa-arrow-left"></i> Events</a></div>
+        <h1 class="page-heading" id="evDetailTitle">Event</h1>
+        <div class="page-sub" id="evDetailSub">Select services and deliverables, then create the estimate</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn" onclick="showEventPricingTab()"><i class="fa-solid fa-sliders"></i> Configure prices</button>
+        <button class="btn btn-primary" id="createEstBtn" onclick="createEstimateFromSelection()"><i class="fa-solid fa-file-circle-plus"></i> Create estimate</button>
+      </div>
+    </div>
+    <div class="content-area">
+      <div class="info-banner" style="margin-bottom:18px;">
+        <i class="fa-solid fa-circle-info"></i>
+        <div id="evDetailBannerText">Tap a card to select. Prices are configured per event type — click <strong>Configure prices</strong> to override master library prices.</div>
+      </div>
+      <!-- Tabs (only shown when multiple events) -->
+      <div id="multiEventTabs" class="hidden" style="display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;flex-wrap:wrap;"></div>
+      <div id="pickerArea"></div>
+    </div>
+  </div>
+
+  <!-- EVENT PRICING (override matrix) -->
+  <div id="page-event-pricing" class="page-content hidden">
+    <div class="topbar">
+      <div>
+        <div class="breadcrumb"><a id="pricingBackLink"><i class="fa-solid fa-arrow-left"></i> Back</a></div>
+        <h1 class="page-heading" id="pricingTitle">Configure prices</h1>
+        <div class="page-sub">Override master library prices for this event only. Leave blank to use master price.</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="saveOverrides()"><i class="fa-solid fa-check"></i> Save overrides</button>
+      </div>
+    </div>
+    <div class="content-area">
+      <div id="overrideArea"></div>
+    </div>
+  </div>
+
+  <!-- MASTER LIBRARY -->
+  <div id="page-services" class="page-content hidden">
+    <div class="topbar">
+      <div>
+        <h1 class="page-heading">Master Library</h1>
+        <div class="page-sub">Services & deliverables available to all events</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openItemModal()"><i class="fa-solid fa-plus"></i> Add item</button>
+      </div>
+    </div>
+    <div class="content-area">
+      <div id="masterList"></div>
+    </div>
+  </div>
+
+  <!-- ESTIMATE FORM -->
+  <div id="page-estimate-form" class="page-content hidden">
+    <div class="topbar">
+      <div>
+        <div class="breadcrumb"><a id="estBackLink"><i class="fa-solid fa-arrow-left"></i> Back</a></div>
+        <h1 class="page-heading" id="estFormTitle">Estimate</h1>
+        <div class="page-sub" id="estFormSub">Review and edit line items, then save or export</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn" onclick="showPage('estimates')">Cancel</button>
+        <button class="btn" onclick="previewPDF()"><i class="fa-solid fa-eye"></i> Preview PDF</button>
+        <button class="btn" onclick="saveEstimate(false)"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+        <button class="btn btn-primary" onclick="saveEstimate(true)"><i class="fa-solid fa-download"></i> Save & Download PDF</button>
+      </div>
+    </div>
+    <div class="content-area">
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-head"><div class="card-title"><i class="fa-solid fa-user"></i> Client details</div></div>
+        <div class="form-grid">
+          <div class="form-row-3">
+            <div class="field"><label>Client name</label><input type="text" id="ef_client" placeholder="e.g. Priya & Arjun" /></div>
+            <div class="field"><label>Phone</label><input type="text" id="ef_phone" placeholder="+91 ..." /></div>
+            <div class="field"><label>Email</label><input type="text" id="ef_email" placeholder="email@..." /></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-head">
+          <div class="card-title"><i class="fa-solid fa-calendar-day"></i> Events <span id="sectionCountBadge" style="font-size:11px;color:var(--text3);font-weight:400;margin-left:6px;"></span></div>
+          <button class="btn btn-sm" onclick="openAddSection()"><i class="fa-solid fa-plus"></i> Add another event</button>
+        </div>
+        <div id="sectionsArea"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-head">
+          <div class="card-title"><i class="fa-solid fa-list"></i> Line items, grouped by event</div>
+        </div>
+        <table class="line-table">
+          <thead>
+            <tr>
+              <th>Service / Description</th>
+              <th class="ctr" style="width:80px;">Qty</th>
+              <th class="num" style="width:120px;">Unit Price (₹)</th>
+              <th class="num" style="width:120px;">Total</th>
+              <th style="width:36px;"></th>
+            </tr>
+          </thead>
+          <tbody id="lineItemsBody"></tbody>
+        </table>
+        <div class="totals">
+          <div class="total-block">
+            <div class="total-label">Subtotal</div>
+            <div class="total-value" id="ef_subtotal">₹0</div>
+          </div>
+          <div class="total-divider"></div>
+          <div class="total-block" style="display:flex;align-items:center;gap:10px;">
+            <div>
+              <div class="total-label">Discount (₹)</div>
+              <input type="number" id="ef_discount" value="0" min="0" oninput="recalcTotals()" style="width:120px;text-align:right;padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:inherit;color:var(--text);background:var(--surface);font-variant-numeric:tabular-nums;margin-top:3px;" />
+            </div>
+          </div>
+          <div class="total-divider"></div>
+          <div class="total-block total-grand">
+            <div class="total-label">Grand total</div>
+            <div class="total-value" id="ef_total">₹0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title"><i class="fa-solid fa-note-sticky"></i> Notes & Terms</div></div>
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="field"><label>Payment terms</label>
+              <select id="ef_payment">
+                <option>30% advance, balance on event day</option>
+                <option>50% advance, balance on event day</option>
+                <option>Full payment in advance</option>
+              </select>
+            </div>
+            <div class="field"><label>Valid until</label><input type="date" id="ef_validUntil" /></div>
+          </div>
+          <div class="field"><label>Notes to client</label><textarea id="ef_notes" placeholder="Anything else the client should know..."></textarea></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAVED ESTIMATES -->
+  <div id="page-estimates" class="page-content hidden">
+    <div class="topbar">
+      <div>
+        <h1 class="page-heading">Saved estimates</h1>
+        <div class="page-sub" id="estListSub">All your estimates</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="showPage('events')"><i class="fa-solid fa-plus"></i> New estimate</button>
+      </div>
+    </div>
+    <div class="content-area">
+      <div id="estimatesList"></div>
+    </div>
+  </div>
+
+  <!-- PACKAGES LIST -->
+  <div id="page-packages" class="page-content hidden">
+    <div class="topbar">
+      <div>
+        <h1 class="page-heading">Packages</h1>
+        <div class="page-sub" id="pkgListSub">Reusable templates — saved bundles of events + line items</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openPackageBuilder()"><i class="fa-solid fa-plus"></i> New package</button>
+      </div>
+    </div>
+    <div class="content-area">
+      <div class="info-banner" style="margin-bottom:18px;">
+        <i class="fa-solid fa-circle-info"></i>
+        <div>Packages are reusable templates. When you start an estimate from a package, prices are taken from the package as saved (snapshotted) — future master library or event-pricing changes won't affect existing packages.</div>
+      </div>
+      <div id="packagesList"></div>
+    </div>
+  </div>
+
+  <!-- PACKAGE BUILDER -->
+  <div id="page-package-builder" class="page-content hidden">
+    <div class="topbar">
+      <div>
+        <div class="breadcrumb"><a onclick="showPage('packages')"><i class="fa-solid fa-arrow-left"></i> Packages</a></div>
+        <h1 class="page-heading" id="pkgBuilderTitle">New package</h1>
+        <div class="page-sub">Define events and line items. Prices will be snapshotted at save.</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn" onclick="showPage('packages')">Cancel</button>
+        <button class="btn btn-danger" id="pkgDeleteBtn" onclick="deletePackageFromBuilder()" style="display:none;"><i class="fa-solid fa-trash"></i> Delete</button>
+        <button class="btn btn-primary" onclick="savePackageFromBuilder()"><i class="fa-solid fa-check"></i> Save package</button>
+      </div>
+    </div>
+    <div class="content-area">
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-head"><div class="card-title"><i class="fa-solid fa-tag"></i> Package details</div></div>
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="field"><label>Package name</label><input type="text" id="pkg_name" placeholder="e.g. Premium Wedding Package" /></div>
+            <div class="field"><label>Short description (optional)</label><input type="text" id="pkg_desc" placeholder="e.g. Full coverage with luxury deliverables" /></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-head">
+          <div class="card-title"><i class="fa-solid fa-calendar-day"></i> Events <span id="pkgSectionCountBadge" style="font-size:11px;color:var(--text3);font-weight:400;margin-left:6px;"></span></div>
+          <button class="btn btn-sm" onclick="openAddSectionPkg()"><i class="fa-solid fa-plus"></i> Add another event</button>
+        </div>
+        <div id="pkgSectionsArea"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><i class="fa-solid fa-list"></i> Line items, grouped by event</div>
+        </div>
+        <table class="line-table">
+          <thead>
+            <tr>
+              <th>Service / Description</th>
+              <th class="ctr" style="width:80px;">Qty</th>
+              <th class="num" style="width:120px;">Unit Price (₹)</th>
+              <th class="num" style="width:120px;">Total</th>
+              <th style="width:36px;"></th>
+            </tr>
+          </thead>
+          <tbody id="pkgLineItemsBody"></tbody>
+        </table>
+        <div class="totals">
+          <div class="total-block">
+            <div class="total-label">Snapshotted total</div>
+            <div class="total-value" id="pkg_total">₹0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STUDIO SETTINGS -->
+  <div id="page-settings" class="page-content hidden">
+    <div class="topbar">
+      <div>
+        <h1 class="page-heading">Studio Settings</h1>
+        <div class="page-sub">Your business details — these appear on every estimate PDF</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="saveSettings()"><i class="fa-solid fa-check"></i> Save settings</button>
+      </div>
+    </div>
+    <div class="content-area">
+      <div class="card" style="max-width:760px;">
+        <div class="card-head"><div class="card-title"><i class="fa-solid fa-building"></i> Business identity</div></div>
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="field"><label>Studio / Company name</label><input type="text" id="st_name" placeholder="e.g. Aperture Studios" /></div>
+            <div class="field"><label>Tagline (optional)</label><input type="text" id="st_tag" placeholder="e.g. Professional Photography & Videography" /></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Phone</label><input type="text" id="st_phone" placeholder="+91 ..." /></div>
+            <div class="field"><label>Email</label><input type="text" id="st_email" placeholder="hello@yourstudio.in" /></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Website (optional)</label><input type="text" id="st_website" placeholder="yourstudio.in" /></div>
+            <div class="field"><label>City / Location</label><input type="text" id="st_city" placeholder="e.g. Chennai, Tamil Nadu" /></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:760px;margin-top:18px;">
+        <div class="card-head"><div class="card-title"><i class="fa-solid fa-palette"></i> PDF theme</div></div>
+        <div id="themeChooser" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;"></div>
+      </div>
+
+      <div class="info-banner" style="margin-top:18px;max-width:760px;">
+        <i class="fa-solid fa-circle-info"></i>
+        <div>These details appear in the PDF header and footer. The studio name shows at the top-left, tagline & city under it, and website/email/phone in the footer. The PDF theme controls colors and styling of generated estimates.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ─── MODAL: ADD/EDIT EVENT TYPE ─── -->
+<div class="modal-backdrop hidden" id="eventModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 class="modal-title" id="eventModalTitle">New event type</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closeEventModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label>Event name</label><input type="text" id="ev_name" placeholder="e.g. Birthday, Engagement, Wedding..." /></div>
+        <div class="field"><label>Icon (FontAwesome name)</label>
+          <select id="ev_icon">
+            <option value="fa-ring">💍 Ring (Wedding/Engagement)</option>
+            <option value="fa-cake-candles">🎂 Cake (Birthday)</option>
+            <option value="fa-baby">👶 Baby (Baby Shower / Naming)</option>
+            <option value="fa-heart">❤️ Heart (Anniversary)</option>
+            <option value="fa-graduation-cap">🎓 Graduation</option>
+            <option value="fa-champagne-glasses">🥂 Reception / Party</option>
+            <option value="fa-camera-retro">📷 Photoshoot</option>
+            <option value="fa-calendar-day">📅 Other event</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="ev_deleteBtn" onclick="deleteEvent()" style="margin-right:auto;display:none;"><i class="fa-solid fa-trash"></i> Delete event type</button>
+      <button class="btn" onclick="closeEventModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEvent()"><i class="fa-solid fa-check"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL: ADD/EDIT MASTER ITEM ─── -->
+<div class="modal-backdrop hidden" id="itemModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 class="modal-title" id="itemModalTitle">Add item</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closeItemModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="field"><label>Item name</label><input type="text" id="it_name" placeholder="e.g. Traditional Photography" /></div>
+          <div class="field"><label>Kind</label>
+            <select id="it_kind">
+              <option value="service">Service</option>
+              <option value="deliverable">Deliverable</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Category</label>
+            <select id="it_cat">
+              <option>Photography</option>
+              <option>Videography</option>
+              <option>Albums</option>
+              <option>Prints</option>
+              <option>Digital</option>
+              <option>Add-ons</option>
+            </select>
+          </div>
+          <div class="field"><label>Default price (₹)</label><input type="number" id="it_price" placeholder="15000" min="0" /></div>
+        </div>
+        <div class="field"><label>Default description</label><textarea id="it_desc" placeholder="Brief description shown to clients..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="it_deleteBtn" onclick="deleteItem()" style="margin-right:auto;display:none;"><i class="fa-solid fa-trash"></i> Delete</button>
+      <button class="btn" onclick="closeItemModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveItem()"><i class="fa-solid fa-check"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL: ADD A NEW EVENT SECTION ─── -->
+<div class="modal-backdrop hidden" id="addSectionModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-head">
+      <h2 class="modal-title">Add another event to this estimate</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closeAddSectionModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:14px;">
+        <label>Event type</label>
+        <select id="addSectionEventSelect" style="padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;"></select>
+      </div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.5;">A new section will be added below your existing events. You can then add line items to it using the event-specific prices configured for that event type.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeAddSectionModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddSection()"><i class="fa-solid fa-plus"></i> Add section</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL: ADD EVENT SECTION TO PACKAGE BUILDER ─── -->
+<div class="modal-backdrop hidden" id="addSectionPkgModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-head">
+      <h2 class="modal-title">Add an event to this package</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closeAddSectionPkgModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:14px;">
+        <label>Event type</label>
+        <select id="addSectionPkgEventSelect" style="padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;"></select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeAddSectionPkgModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddSectionPkg()"><i class="fa-solid fa-plus"></i> Add section</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL: PICK FROM SAVED PACKAGES (from Events page) ─── -->
+<div class="modal-backdrop hidden" id="packagePickerModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-head">
+      <h2 class="modal-title">Start estimate from a package</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closePackagePicker()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="packagePickerBody"></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closePackagePicker()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL: ADD LINE ITEM FROM MASTER ─── -->
+<div class="modal-backdrop hidden" id="pickLineModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-head">
+      <h2 class="modal-title" id="pickLineModalTitle">Add line item</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closePickLineModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:14px;">
+        <label>Pick from master library</label>
+        <select id="pickLineSelect" style="padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;"></select>
+      </div>
+      <div style="font-size:11px;color:var(--text3);">Or just click <strong>Add blank line</strong> to enter a custom item directly into the estimate.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="addBlankLine()">Add blank line</button>
+      <button class="btn" onclick="closePickLineModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmPickLine()"><i class="fa-solid fa-plus"></i> Add selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL: CONFIRM DELETE ─── -->
+<div class="modal-backdrop hidden" id="confirmModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-head">
+      <h2 class="modal-title" id="confirmTitle">Confirm</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closeConfirm()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmMsg" style="font-size:13px;color:var(--text2);line-height:1.6;"></p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="confirmBtn"><i class="fa-solid fa-trash"></i> Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DEFAULT DATA ─────────────────────────────────────────────────────────────
+
+const DEFAULT_ITEMS = [
+  // Services
+  { id: 's1', kind:'service', name: 'Traditional Photography', category: 'Photography', price: 18000, desc: 'Formal posed coverage, candid highlights, colour-graded edited gallery delivered digitally.' },
+  { id: 's2', kind:'service', name: 'Candid Photography', category: 'Photography', price: 15000, desc: 'Unscripted natural moments, photojournalistic style coverage throughout the event.' },
+  { id: 's3', kind:'service', name: 'Traditional Videography', category: 'Videography', price: 22000, desc: 'Full ceremony & reception film, colour graded, music synchronised.' },
+  { id: 's4', kind:'service', name: 'Candid Videography', category: 'Videography', price: 18000, desc: 'Documentary-style coverage, raw unscripted storytelling, cinematic edit.' },
+  { id: 's5', kind:'service', name: 'Drone Coverage', category: 'Add-ons', price: 8000, desc: 'Aerial photography and videography (subject to venue permissions).' },
+  // Deliverables
+  { id: 'd1', kind:'deliverable', name: 'Classic Album', category: 'Albums', price: 8000, desc: '20 spreads, standard binding, 25×25 cm size.' },
+  { id: 'd2', kind:'deliverable', name: 'Premium Album', category: 'Albums', price: 14500, desc: '30 spreads, lay-flat binding, linen cover, 30×30 cm size.' },
+  { id: 'd3', kind:'deliverable', name: 'Luxury Album', category: 'Albums', price: 28000, desc: '40 spreads, leather cover, gold embossing, gift box.' },
+  { id: 'd4', kind:'deliverable', name: 'Digital Gallery', category: 'Digital', price: 3000, desc: 'Private online gallery with all edited photos, shareable link, 1 year storage.' },
+  { id: 'd5', kind:'deliverable', name: 'Highlight Reel (60s)', category: 'Digital', price: 5000, desc: '60-second cinematic highlight video, optimised for social media.' },
+  { id: 'd6', kind:'deliverable', name: 'Framed Prints (set of 4)', category: 'Prints', price: 4500, desc: 'Four 8×10 inch framed prints of your choice, museum-quality paper.' },
+];
+
+const DEFAULT_EVENTS = [
+  { id: 'e1', name: 'Wedding', icon: 'fa-ring', overrides: {} },
+  { id: 'e2', name: 'Engagement', icon: 'fa-ring', overrides: {} },
+  { id: 'e3', name: 'Birthday', icon: 'fa-cake-candles', overrides: {} },
+  { id: 'e4', name: 'Baby Shower', icon: 'fa-baby', overrides: {} },
+];
+
+// overrides shape:
+// { [itemId]: { price?: number, desc?: string } }
+
+const DEFAULT_SETTINGS = {
+  name: 'FrameWork Studio',
+  tag: 'Professional Photography & Videography',
+  phone: '+91 98400 00000',
+  email: 'hello@frameworkstudio.in',
+  website: 'frameworkstudio.in',
+  city: 'Chennai, Tamil Nadu',
+  pdfTheme: 'classic',
+};
+
+function load(key, def) { try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? def : v; } catch { return def; } }
+function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+let items = load('fw_items', DEFAULT_ITEMS);
+let events = load('fw_events', DEFAULT_EVENTS);
+let estimates = load('fw_estimates', []);
+let packages = load('fw_packages', []);
+let settings = load('fw_settings', DEFAULT_SETTINGS);
+// Migrate older settings that don't have a theme
+if (!settings.pdfTheme) settings.pdfTheme = 'classic';
+
+// One-time migration: ensure old single-event estimates have a sections array
+estimates.forEach(e => {
+  if (!e.sections) {
+    e.sections = [{
+      id: 'sec_' + (e.id || genId()),
+      eventTypeId: e.eventTypeId || null,
+      eventTypeName: e.eventType || 'Event',
+      eventIcon: (events.find(ev => ev.id === e.eventTypeId) || {}).icon || 'fa-calendar-day',
+      date: e.eventDate || '',
+      venue: e.venue || '',
+    }];
+    // Attach all existing line items to this single section
+    if (e.lineItems && e.lineItems.length) {
+      e.lineItems.forEach(li => { if (!li.sectionId) li.sectionId = e.sections[0].id; });
+    }
+  }
+});
+
+// ─── STATE ─────────────────────────────────────────────────────────────────────
+
+// Events page — multi-select tray
+let multiSelectMode = false;
+let multiSelectedEventIds = [];     // ordered list of event IDs in the tray
+
+// Event-detail page — picker state per event tab
+// pickerSelections: Map<eventId, { services: Set, deliverables: Set }>
+let pickerSelections = new Map();
+let pickerActiveEventId = null;     // which tab is currently active
+let pickerEventIds = [];            // ordered list of events being picked from
+
+// Modals / editing
+let editingEventId = null;
+let editingItemId = null;
+let editingEstimateId = null;
+let pricingReturnPage = 'event-detail';
+let pricingForEventId = null;       // which event we're currently pricing (might differ from active tab)
+let pickLineTargetSectionId = null; // section the "Add line item" modal will insert into
+
+// Estimate-form working state
+// currentSections: [{ id, eventTypeId, eventTypeName, eventIcon, date, venue }]
+// currentLineItems: [{ lineId, sectionId, itemId, kind, category, name, desc, qty, price }]
+let currentSections = [];
+let currentLineItems = [];
+
+// Package-builder working state (parallel to estimate state)
+let pkgSections = [];
+let pkgLineItems = [];
+let editingPackageId = null;
+
+// Tells the shared pickLine modal which target it's adding to ('estimate' | 'package')
+let pickLineMode = 'estimate';
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+
+function showPage(page) {
+  document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.remove('hidden');
+
+  // sidebar highlight
+  let navKey = page;
+  if (page === 'event-detail' || page === 'event-pricing') navKey = 'events';
+  if (page === 'estimate-form') navKey = 'estimates';
+  if (page === 'package-builder') navKey = 'packages';
+  const nb = document.getElementById('nav-' + navKey);
+  if (nb) nb.classList.add('active');
+
+  if (page === 'events') {
+    if (!multiSelectMode) resetMultiModeUI();
+    renderEventTiles();
+  }
+  if (page === 'services') renderMasterList();
+  if (page === 'estimates') renderEstimatesList();
+  if (page === 'packages') renderPackagesList();
+  if (page === 'settings') loadSettingsForm();
+
+  // Mobile: close drawer + update top bar title
+  closeSidebar();
+  updateMobileTitle(page);
+  window.scrollTo({ top: 0, behavior: 'auto' });
+}
+
+// ─── MOBILE HELPERS ───────────────────────────────────────────────────────────
+
+function isMobile() { return window.matchMedia('(max-width: 720px)').matches; }
+
+function toggleSidebar() {
+  const sb = document.getElementById('appSidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  const open = sb.classList.toggle('open');
+  bd.classList.toggle('open', open);
+}
+
+function closeSidebar() {
+  document.getElementById('appSidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('open');
+}
+
+const MOBILE_TITLES = {
+  'events': 'Start estimate',
+  'event-detail': 'Pick services',
+  'event-pricing': 'Configure prices',
+  'estimate-form': 'Estimate',
+  'estimates': 'Saved estimates',
+  'services': 'Master library',
+  'packages': 'Packages',
+  'package-builder': 'Package builder',
+  'settings': 'Settings',
+};
+function updateMobileTitle(page) {
+  const t = document.getElementById('mobileBarTitle');
+  if (!t) return;
+  t.textContent = MOBILE_TITLES[page] || (settings.name || 'FrameWork');
+}
+
+// ─── EVENT TILES ──────────────────────────────────────────────────────────────
+
+function renderEventTiles() {
+  const el = document.getElementById('eventTiles');
+  let html = events.map(e => {
+    const svcCount = items.filter(i => i.kind === 'service').length;
+    const delCount = items.filter(i => i.kind === 'deliverable').length;
+    const isSelected = multiSelectMode && multiSelectedEventIds.includes(e.id);
+    const clickAction = multiSelectMode ? `toggleMultiSelect('${e.id}')` : `openEvent('${e.id}')`;
+    const selectedStyle = isSelected
+      ? 'border-color:var(--accent);background:var(--accent-light);box-shadow:var(--shadow-md);'
+      : '';
+    const checkBadge = isSelected
+      ? `<div style="position:absolute;top:12px;left:12px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;"><i class="fa-solid fa-check"></i></div>`
+      : '';
+    return `<div class="event-tile" style="${selectedStyle}" onclick="${clickAction}">
+      ${checkBadge}
+      ${!multiSelectMode ? `<div class="event-tile-menu">
+        <button onclick="event.stopPropagation(); openEditEvent('${e.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+      </div>` : ''}
+      <div class="event-tile-icon"><i class="fa-solid ${e.icon || 'fa-calendar-day'}"></i></div>
+      <div class="event-tile-name">${e.name}</div>
+      <div class="event-tile-meta">
+        <span><i class="fa-solid fa-camera"></i> ${svcCount} services</span>
+        <span><i class="fa-solid fa-box"></i> ${delCount} deliverables</span>
+      </div>
+    </div>`;
+  }).join('');
+  if (!multiSelectMode) {
+    html += `<div class="event-tile add" onclick="openEventModal()">
+      <i class="fa-solid fa-plus"></i>
+      <div style="font-size:13px;">New event type</div>
+    </div>`;
+  }
+  el.innerHTML = html;
+  renderMultiTray();
+}
+
+function toggleMultiMode() {
+  multiSelectMode = !multiSelectMode;
+  const btn = document.getElementById('multiToggleBtn');
+  const sub = document.getElementById('eventsPageSub');
+  const tray = document.getElementById('multiTray');
+  if (multiSelectMode) {
+    btn.classList.add('btn-primary');
+    btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Cancel multi-event';
+    sub.textContent = 'Tap multiple event tiles to combine them into a single estimate';
+    tray.classList.remove('hidden');
+  } else {
+    btn.classList.remove('btn-primary');
+    btn.innerHTML = '<i class="fa-solid fa-layer-group"></i> Multi-event';
+    sub.textContent = 'Pick an event type to begin — or click "Multi-event" to combine several into one estimate';
+    tray.classList.add('hidden');
+    multiSelectedEventIds = [];
+  }
+  renderEventTiles();
+}
+
+function toggleMultiSelect(eventId) {
+  const idx = multiSelectedEventIds.indexOf(eventId);
+  if (idx >= 0) multiSelectedEventIds.splice(idx, 1);
+  else multiSelectedEventIds.push(eventId);
+  renderEventTiles();
+}
+
+function clearMultiSelection() {
+  multiSelectedEventIds = [];
+  renderEventTiles();
+}
+
+function renderMultiTray() {
+  if (!multiSelectMode) return;
+  const list = document.getElementById('multiTrayList');
+  const btn = document.getElementById('multiContinueBtn');
+  if (!multiSelectedEventIds.length) {
+    list.textContent = 'No events selected';
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Continue';
+    return;
+  }
+  const names = multiSelectedEventIds.map(id => {
+    const ev = events.find(e => e.id === id);
+    return ev ? ev.name : '';
+  }).filter(Boolean);
+  list.textContent = names.join('  →  ');
+  btn.disabled = false;
+  btn.innerHTML = `<i class="fa-solid fa-arrow-right"></i> Continue with ${names.length} event${names.length>1?'s':''}`;
+}
+
+function continueMultiSelection() {
+  if (!multiSelectedEventIds.length) return;
+  openMultiEventPicker(multiSelectedEventIds);
+}
+
+function openEventModal() {
+  editingEventId = null;
+  document.getElementById('eventModalTitle').textContent = 'New event type';
+  document.getElementById('ev_name').value = '';
+  document.getElementById('ev_icon').value = 'fa-calendar-day';
+  document.getElementById('ev_deleteBtn').style.display = 'none';
+  document.getElementById('eventModal').classList.remove('hidden');
+}
+function openEditEvent(id) {
+  const e = events.find(x => x.id === id);
+  if (!e) return;
+  editingEventId = id;
+  document.getElementById('eventModalTitle').textContent = 'Edit event type';
+  document.getElementById('ev_name').value = e.name;
+  document.getElementById('ev_icon').value = e.icon || 'fa-calendar-day';
+  document.getElementById('ev_deleteBtn').style.display = '';
+  document.getElementById('eventModal').classList.remove('hidden');
+}
+function closeEventModal() { document.getElementById('eventModal').classList.add('hidden'); }
+function saveEvent() {
+  const name = document.getElementById('ev_name').value.trim();
+  if (!name) { showToast('Please enter an event name', 'error'); return; }
+  const icon = document.getElementById('ev_icon').value;
+  if (editingEventId) {
+    events = events.map(e => e.id === editingEventId ? {...e, name, icon} : e);
+  } else {
+    events.push({ id: genId(), name, icon, overrides: {} });
+  }
+  save('fw_events', events);
+  closeEventModal();
+  renderEventTiles();
+  showToast('Event type saved');
+}
+function deleteEvent() {
+  if (!editingEventId) return;
+  confirmDialog('Delete event type?', 'This will not affect saved estimates, but you won\'t be able to start new ones from this event type.', () => {
+    events = events.filter(e => e.id !== editingEventId);
+    save('fw_events', events);
+    closeEventModal();
+    renderEventTiles();
+    showToast('Event type deleted');
+  });
+}
+
+// ─── EVENT DETAIL (pick services/deliverables) ────────────────────────────────
+
+function openEvent(eventId) {
+  // Single-event mode: just set up one event in the picker
+  openMultiEventPicker([eventId]);
+}
+
+function openMultiEventPicker(eventIds) {
+  pickerEventIds = [...eventIds];
+  pickerActiveEventId = eventIds[0];
+  pickerSelections = new Map();
+  eventIds.forEach(id => pickerSelections.set(id, { services: new Set(), deliverables: new Set() }));
+  renderPickerTabs();
+  renderPicker();
+  // Title
+  const isMulti = eventIds.length > 1;
+  if (isMulti) {
+    const names = eventIds.map(id => (events.find(e => e.id === id) || {}).name).filter(Boolean);
+    document.getElementById('evDetailTitle').textContent = names.join(' · ');
+    document.getElementById('evDetailSub').textContent = 'Select services and deliverables for each event using the tabs below';
+    document.getElementById('evDetailBannerText').innerHTML = 'Use the tabs to switch between events. Each event uses its own configured prices.';
+  } else {
+    const ev = events.find(e => e.id === eventIds[0]);
+    document.getElementById('evDetailTitle').textContent = ev ? ev.name : 'Event';
+    document.getElementById('evDetailSub').textContent = 'Select services and deliverables, then create the estimate';
+    document.getElementById('evDetailBannerText').innerHTML = `Tap a card to select. Prices shown are configured for <strong>${ev ? ev.name : 'this event'}</strong>. Click <strong>Configure prices</strong> to set event-specific rates.`;
+  }
+  showPage('event-detail');
+}
+
+function renderPickerTabs() {
+  const tabs = document.getElementById('multiEventTabs');
+  if (pickerEventIds.length <= 1) { tabs.classList.add('hidden'); return; }
+  tabs.classList.remove('hidden');
+  tabs.innerHTML = pickerEventIds.map(id => {
+    const ev = events.find(e => e.id === id);
+    if (!ev) return '';
+    const sel = pickerSelections.get(id);
+    const count = (sel.services.size + sel.deliverables.size);
+    const active = id === pickerActiveEventId ? 'active' : '';
+    return `<div class="tab ${active}" onclick="switchPickerTab('${id}')">
+      <i class="fa-solid ${ev.icon || 'fa-calendar-day'}" style="margin-right:6px;"></i>
+      ${ev.name}
+      ${count ? `<span style="background:var(--accent);color:#fff;font-size:10px;padding:1px 6px;border-radius:9px;margin-left:6px;">${count}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function switchPickerTab(eventId) {
+  pickerActiveEventId = eventId;
+  renderPickerTabs();
+  renderPicker();
+}
+
+function priceForEvent(itemId, eventId) {
+  const ev = events.find(e => e.id === eventId);
+  const item = items.find(i => i.id === itemId);
+  if (!item) return { price: 0, desc: '', overridden: false };
+  const ov = (ev && ev.overrides && ev.overrides[itemId]) || {};
+  return {
+    price: ov.price != null ? ov.price : item.price,
+    desc: ov.desc != null && ov.desc !== '' ? ov.desc : item.desc,
+    overridden: ov.price != null || (ov.desc != null && ov.desc !== ''),
+  };
+}
+
+function renderPicker() {
+  const services = items.filter(i => i.kind === 'service');
+  const deliverables = items.filter(i => i.kind === 'deliverable');
+  const sel = pickerSelections.get(pickerActiveEventId) || { services: new Set(), deliverables: new Set() };
+  const renderCards = (list, selectedSet, kind) => {
+    const cats = [...new Set(list.map(i => i.category))];
+    return cats.map(cat => {
+      const catItems = list.filter(i => i.category === cat);
+      return `<div style="margin-bottom:14px;">
+        <div style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">${cat}</div>
+        <div class="picker-grid">
+          ${catItems.map(i => {
+            const p = priceForEvent(i.id, pickerActiveEventId);
+            const isSel = selectedSet.has(i.id) ? 'selected' : '';
+            return `<div class="picker-card ${isSel}" onclick="togglePick('${kind}','${i.id}')">
+              <div class="picker-card-name">${i.name}</div>
+              <div class="picker-card-desc">${p.desc || ''}</div>
+              <div class="picker-card-price">₹${p.price.toLocaleString('en-IN')}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  };
+
+  const html = `
+    <div class="picker-section">
+      <div class="picker-section-head">
+        <div class="picker-section-title">Services</div>
+        <div class="picker-section-count"><span id="svcSelCount">0</span> selected</div>
+      </div>
+      ${services.length ? renderCards(services, sel.services, 'service') : emptyMsg('No services in master library yet')}
+    </div>
+    <div class="picker-section">
+      <div class="picker-section-head">
+        <div class="picker-section-title">Deliverables</div>
+        <div class="picker-section-count"><span id="delSelCount">0</span> selected</div>
+      </div>
+      ${deliverables.length ? renderCards(deliverables, sel.deliverables, 'deliverable') : emptyMsg('No deliverables in master library yet')}
+    </div>`;
+  document.getElementById('pickerArea').innerHTML = html;
+  updateSelCounts();
+}
+
+function emptyMsg(text) {
+  return `<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px;border:1px dashed var(--border);border-radius:var(--radius-sm);">
+    ${text}. <a onclick="showPage('services')" style="color:var(--accent);cursor:pointer;">Add items →</a></div>`;
+}
+
+function togglePick(kind, id) {
+  const sel = pickerSelections.get(pickerActiveEventId);
+  if (!sel) return;
+  const set = kind === 'service' ? sel.services : sel.deliverables;
+  if (set.has(id)) set.delete(id); else set.add(id);
+  renderPickerTabs();
+  renderPicker();
+}
+
+function updateSelCounts() {
+  const sel = pickerSelections.get(pickerActiveEventId);
+  if (!sel) return;
+  const sc = document.getElementById('svcSelCount');
+  const dc = document.getElementById('delSelCount');
+  if (sc) sc.textContent = sel.services.size;
+  if (dc) dc.textContent = sel.deliverables.size;
+}
+
+// ─── EVENT PRICING (overrides) ────────────────────────────────────────────────
+
+function showEventPricingTab() {
+  pricingReturnPage = 'event-detail';
+  pricingForEventId = pickerActiveEventId;
+  document.getElementById('pricingBackLink').onclick = () => showPage('event-detail');
+  renderOverrides();
+  const ev = events.find(e => e.id === pricingForEventId);
+  document.getElementById('pricingTitle').textContent = 'Configure prices — ' + (ev ? ev.name : '');
+  showPage('event-pricing');
+}
+
+function renderOverrides() {
+  const ev = events.find(e => e.id === pricingForEventId);
+  if (!ev) return;
+  const ov = ev.overrides || {};
+  const renderTable = (list, label) => {
+    if (!list.length) return '';
+    const cats = [...new Set(list.map(i => i.category))];
+    let rows = '';
+    cats.forEach(cat => {
+      rows += `<tr class="cat-row"><td colspan="3">${cat}</td></tr>`;
+      list.filter(i => i.category === cat).forEach(i => {
+        const o = ov[i.id] || {};
+        const priceHasVal = o.price != null;
+        const descHasVal = o.desc != null && o.desc !== '';
+        rows += `<tr>
+          <td>
+            <div class="svc-name">${i.name}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;">Master: ₹${i.price.toLocaleString('en-IN')}</div>
+            <textarea class="override-desc-input ${descHasVal?'has-value':''}" placeholder="Master: ${(i.desc||'').replace(/"/g,'&quot;').slice(0,80)}${(i.desc||'').length>80?'…':''}" data-item="${i.id}" data-field="desc" oninput="markOverrideChanged(this)">${o.desc != null ? o.desc : ''}</textarea>
+          </td>
+          <td class="num">
+            <input type="number" class="override-input ${priceHasVal?'has-value':''}" placeholder="${i.price}" value="${priceHasVal ? o.price : ''}" data-item="${i.id}" data-field="price" oninput="markOverrideChanged(this)" />
+          </td>
+          <td class="num" style="width:36px;">
+            ${(priceHasVal || descHasVal) ? `<button class="row-del" onclick="clearOverride('${i.id}')" title="Reset to master"><i class="fa-solid fa-rotate-left"></i></button>` : ''}
+          </td>
+        </tr>`;
+      });
+    });
+    return `<div class="card" style="margin-bottom:18px;padding:0;overflow:hidden;">
+      <div style="padding:16px 22px;border-bottom:1px solid var(--border);font-size:14px;font-weight:500;">${label}</div>
+      <table class="override-table">
+        <thead><tr><th>Item / Override description</th><th class="num">Override price (₹)</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  };
+  const services = items.filter(i => i.kind === 'service');
+  const deliverables = items.filter(i => i.kind === 'deliverable');
+  document.getElementById('overrideArea').innerHTML = renderTable(services, 'Services') + renderTable(deliverables, 'Deliverables');
+}
+
+function markOverrideChanged(input) {
+  const has = input.value !== '' && input.value !== null;
+  input.classList.toggle('has-value', has);
+}
+
+function clearOverride(itemId) {
+  const ev = events.find(e => e.id === pricingForEventId);
+  if (!ev || !ev.overrides) return;
+  delete ev.overrides[itemId];
+  save('fw_events', events);
+  renderOverrides();
+  showToast('Reset to master price');
+}
+
+function saveOverrides() {
+  const ev = events.find(e => e.id === pricingForEventId);
+  if (!ev) return;
+  if (!ev.overrides) ev.overrides = {};
+  document.querySelectorAll('.override-input, .override-desc-input').forEach(inp => {
+    const itemId = inp.dataset.item;
+    const field = inp.dataset.field;
+    const val = inp.value.trim();
+    if (!ev.overrides[itemId]) ev.overrides[itemId] = {};
+    if (val === '') {
+      delete ev.overrides[itemId][field];
+    } else {
+      ev.overrides[itemId][field] = field === 'price' ? (parseFloat(val) || 0) : val;
+    }
+    if (Object.keys(ev.overrides[itemId]).length === 0) delete ev.overrides[itemId];
+  });
+  save('fw_events', events);
+  showToast('Overrides saved');
+  showPage(pricingReturnPage);
+}
+
+// ─── MASTER LIBRARY ───────────────────────────────────────────────────────────
+
+function renderMasterList() {
+  const services = items.filter(i => i.kind === 'service');
+  const deliverables = items.filter(i => i.kind === 'deliverable');
+  const renderTbl = (list, label) => {
+    if (!list.length) return `<div style="padding:30px;text-align:center;color:var(--text3);">No ${label.toLowerCase()} yet.</div>`;
+    const cats = [...new Set(list.map(i => i.category))];
+    let rows = '';
+    cats.forEach(cat => {
+      rows += `<tr class="cat-row"><td colspan="4">${cat}</td></tr>`;
+      list.filter(i => i.category === cat).forEach(i => {
+        rows += `<tr>
+          <td>
+            <div class="svc-name">${i.name}</div>
+            <div class="svc-desc">${i.desc || ''}</div>
+          </td>
+          <td class="num svc-price-cell">₹${i.price.toLocaleString('en-IN')}</td>
+          <td class="num svc-action-cell" style="width:60px;"><button class="btn btn-sm btn-ghost" onclick="openEditItem('${i.id}')"><i class="fa-solid fa-pen"></i></button></td>
+        </tr>`;
+      });
+    });
+    return `<div style="margin-bottom:22px;">
+      <h3 style="font-size:20px;margin-bottom:12px;color:var(--text);">${label}</h3>
+      <table class="svc-table">
+        <thead><tr><th>Item</th><th class="num">Default price</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  };
+  document.getElementById('masterList').innerHTML = renderTbl(services, 'Services') + renderTbl(deliverables, 'Deliverables');
+}
+
+function openItemModal() {
+  editingItemId = null;
+  document.getElementById('itemModalTitle').textContent = 'Add item';
+  document.getElementById('it_name').value = '';
+  document.getElementById('it_kind').value = 'service';
+  document.getElementById('it_cat').value = 'Photography';
+  document.getElementById('it_price').value = '';
+  document.getElementById('it_desc').value = '';
+  document.getElementById('it_deleteBtn').style.display = 'none';
+  document.getElementById('itemModal').classList.remove('hidden');
+}
+function openEditItem(id) {
+  const it = items.find(i => i.id === id);
+  if (!it) return;
+  editingItemId = id;
+  document.getElementById('itemModalTitle').textContent = 'Edit item';
+  document.getElementById('it_name').value = it.name;
+  document.getElementById('it_kind').value = it.kind;
+  document.getElementById('it_cat').value = it.category;
+  document.getElementById('it_price').value = it.price;
+  document.getElementById('it_desc').value = it.desc || '';
+  document.getElementById('it_deleteBtn').style.display = '';
+  document.getElementById('itemModal').classList.remove('hidden');
+}
+function closeItemModal() { document.getElementById('itemModal').classList.add('hidden'); }
+function saveItem() {
+  const name = document.getElementById('it_name').value.trim();
+  if (!name) { showToast('Please enter a name', 'error'); return; }
+  const data = {
+    name,
+    kind: document.getElementById('it_kind').value,
+    category: document.getElementById('it_cat').value,
+    price: parseFloat(document.getElementById('it_price').value) || 0,
+    desc: document.getElementById('it_desc').value.trim(),
+  };
+  if (editingItemId) {
+    items = items.map(i => i.id === editingItemId ? {...i, ...data} : i);
+  } else {
+    items.push({ id: genId(), ...data });
+  }
+  save('fw_items', items);
+  closeItemModal();
+  renderMasterList();
+  showToast('Item saved');
+}
+function deleteItem() {
+  if (!editingItemId) return;
+  confirmDialog('Delete this item?', 'It won\'t affect saved estimates, but will be removed from all event pickers.', () => {
+    items = items.filter(i => i.id !== editingItemId);
+    // also remove from any event overrides
+    events.forEach(e => { if (e.overrides && e.overrides[editingItemId]) delete e.overrides[editingItemId]; });
+    save('fw_items', items);
+    save('fw_events', events);
+    closeItemModal();
+    renderMasterList();
+    showToast('Item deleted');
+  });
+}
+
+// ─── CREATE ESTIMATE FROM SELECTION ───────────────────────────────────────────
+
+function createEstimateFromSelection() {
+  // Validate: at least one item across all events
+  let totalSelected = 0;
+  pickerSelections.forEach(sel => { totalSelected += sel.services.size + sel.deliverables.size; });
+  if (totalSelected === 0) {
+    showToast('Select at least one service or deliverable', 'error');
+    return;
+  }
+
+  // Build sections (one per event) and line items (linked via sectionId)
+  currentSections = [];
+  currentLineItems = [];
+  pickerEventIds.forEach(eventId => {
+    const ev = events.find(e => e.id === eventId);
+    if (!ev) return;
+    const sel = pickerSelections.get(eventId) || { services: new Set(), deliverables: new Set() };
+    // Even if no items selected for an event, keep its section — user might add items later
+    const sectionId = 'sec_' + genId();
+    currentSections.push({
+      id: sectionId,
+      eventTypeId: eventId,
+      eventTypeName: ev.name,
+      eventIcon: ev.icon || 'fa-calendar-day',
+      date: '',
+      venue: '',
+    });
+    const pushItem = (id, kind) => {
+      const it = items.find(i => i.id === id);
+      if (!it) return;
+      const p = priceForEvent(id, eventId);
+      currentLineItems.push({
+        lineId: genId(),
+        sectionId,
+        itemId: id,
+        kind,
+        category: it.category,
+        name: it.name,
+        desc: p.desc,
+        qty: 1,
+        price: p.price,
+      });
+    };
+    sel.services.forEach(id => pushItem(id, 'service'));
+    sel.deliverables.forEach(id => pushItem(id, 'deliverable'));
+  });
+
+  // Drop empty sections only if there are multiple events AND at least one section has items
+  // (single-event case: always keep the section even if empty so the form is usable)
+  if (currentSections.length > 1) {
+    const sectionsWithItems = new Set(currentLineItems.map(l => l.sectionId));
+    currentSections = currentSections.filter(s => sectionsWithItems.has(s.id));
+  }
+
+  // open form fresh
+  editingEstimateId = null;
+  document.getElementById('estBackLink').onclick = () => showPage('event-detail');
+  const titlePrefix = currentSections.length > 1
+    ? 'New multi-event estimate'
+    : 'New estimate — ' + (currentSections[0]?.eventTypeName || '');
+  document.getElementById('estFormTitle').textContent = titlePrefix;
+  document.getElementById('estFormSub').textContent = 'Review and edit before saving';
+  document.getElementById('ef_client').value = '';
+  document.getElementById('ef_phone').value = '';
+  document.getElementById('ef_email').value = '';
+  document.getElementById('ef_discount').value = 0;
+  document.getElementById('ef_payment').value = '30% advance, balance on event day';
+  document.getElementById('ef_notes').value = '';
+  // valid until = today + 30
+  const vd = new Date(); vd.setDate(vd.getDate() + 30);
+  document.getElementById('ef_validUntil').value = vd.toISOString().split('T')[0];
+
+  renderSections();
+  renderLineItems();
+  recalcTotals();
+  showPage('estimate-form');
+
+  // Exit multi-select mode so the Events page is clean when revisited
+  multiSelectMode = false;
+  multiSelectedEventIds = [];
+  resetMultiModeUI();
+}
+
+// Resets the events-page multi-mode UI (button label, subheading, tray visibility).
+// Call this whenever multi-select state is forcibly cleared.
+function resetMultiModeUI() {
+  const btn = document.getElementById('multiToggleBtn');
+  const sub = document.getElementById('eventsPageSub');
+  const tray = document.getElementById('multiTray');
+  if (!btn || !sub || !tray) return;
+  btn.classList.remove('btn-primary');
+  btn.innerHTML = '<i class="fa-solid fa-layer-group"></i> Multi-event';
+  sub.textContent = 'Pick an event type to begin — or click "Multi-event" to combine several into one estimate';
+  tray.classList.add('hidden');
+}
+
+// ─── ESTIMATE FORM: SECTIONS ──────────────────────────────────────────────────
+
+function renderSections() {
+  const area = document.getElementById('sectionsArea');
+  const badge = document.getElementById('sectionCountBadge');
+  badge.textContent = currentSections.length === 1
+    ? '(1 event)'
+    : '(' + currentSections.length + ' events)';
+
+  if (!currentSections.length) {
+    area.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px;border:1px dashed var(--border);border-radius:var(--radius-sm);">No events yet. Click "Add another event" to add one.</div>`;
+    return;
+  }
+
+  area.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px;">${
+    currentSections.map((s, idx) => {
+      const itemCount = currentLineItems.filter(l => l.sectionId === s.id).length;
+      const canDelete = currentSections.length > 1;
+      return `<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;background:var(--surface);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:32px;height:32px;border-radius:8px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;"><i class="fa-solid ${s.eventIcon}"></i></div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:500;color:var(--text);">${escapeHtml(s.eventTypeName)}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">${itemCount} line item${itemCount===1?'':'s'}</div>
+          </div>
+          ${canDelete ? `<button class="btn btn-sm btn-danger" onclick="removeSection('${s.id}')"><i class="fa-solid fa-trash"></i> Remove event</button>` : ''}
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Event date (optional)</label><input type="date" value="${s.date || ''}" oninput="updateSectionField('${s.id}','date',this.value)" /></div>
+          <div class="field"><label>Venue (optional)</label><input type="text" value="${escapeAttr(s.venue || '')}" placeholder="e.g. Leela Palace, Chennai" oninput="updateSectionField('${s.id}','venue',this.value)" /></div>
+        </div>
+      </div>`;
+    }).join('')
+  }</div>`;
+}
+
+function updateSectionField(sectionId, field, val) {
+  const s = currentSections.find(x => x.id === sectionId);
+  if (!s) return;
+  s[field] = val;
+}
+
+function removeSection(sectionId) {
+  if (currentSections.length <= 1) {
+    showToast('An estimate must have at least one event', 'error');
+    return;
+  }
+  const s = currentSections.find(x => x.id === sectionId);
+  const lineCount = currentLineItems.filter(l => l.sectionId === sectionId).length;
+  const msg = lineCount
+    ? `Remove "${s.eventTypeName}" and its ${lineCount} line item${lineCount===1?'':'s'}?`
+    : `Remove "${s.eventTypeName}" from this estimate?`;
+  confirmDialog('Remove event?', msg, () => {
+    currentSections = currentSections.filter(x => x.id !== sectionId);
+    currentLineItems = currentLineItems.filter(l => l.sectionId !== sectionId);
+    renderSections();
+    renderLineItems();
+    recalcTotals();
+    showToast('Event removed');
+  });
+}
+
+// ─── ADD ANOTHER EVENT (mid-estimate) ─────────────────────────────────────────
+
+function openAddSection() {
+  const sel = document.getElementById('addSectionEventSelect');
+  sel.innerHTML = '<option value="">— pick an event type —</option>' +
+    events.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+  document.getElementById('addSectionModal').classList.remove('hidden');
+}
+function closeAddSectionModal() { document.getElementById('addSectionModal').classList.add('hidden'); }
+function confirmAddSection() {
+  const eventId = document.getElementById('addSectionEventSelect').value;
+  if (!eventId) { showToast('Pick an event type', 'error'); return; }
+  const ev = events.find(e => e.id === eventId);
+  if (!ev) return;
+  const sectionId = 'sec_' + genId();
+  currentSections.push({
+    id: sectionId,
+    eventTypeId: eventId,
+    eventTypeName: ev.name,
+    eventIcon: ev.icon || 'fa-calendar-day',
+    date: '',
+    venue: '',
+  });
+  closeAddSectionModal();
+  renderSections();
+  renderLineItems();
+  showToast('Event added — now add line items for it');
+}
+
+// ─── LINE ITEMS (now section-aware) ───────────────────────────────────────────
+
+function renderLineItems() {
+  const body = document.getElementById('lineItemsBody');
+  if (!currentSections.length) {
+    body.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3);font-size:13px;">Add an event first.</td></tr>`;
+    return;
+  }
+
+  const mobile = isMobile();
+  let html = '';
+  currentSections.forEach(section => {
+    const sectionLines = currentLineItems.filter(l => l.sectionId === section.id);
+    // Section header row
+    const meta = [];
+    if (section.date) meta.push(formatDate(section.date));
+    if (section.venue) meta.push(escapeHtml(section.venue));
+    const metaText = meta.length ? ` <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3);font-size:11px;margin-left:8px;">${meta.join(' · ')}</span>` : '';
+    html += `<tr class="cat-row" style="background:var(--accent-light);">
+      <td colspan="5" style="color:var(--accent);font-size:11px;padding:10px 14px;border-left:3px solid var(--accent);">
+        <i class="fa-solid ${section.eventIcon}" style="margin-right:6px;"></i>
+        ${escapeHtml(section.eventTypeName)}${metaText}
+        <button class="btn btn-sm" style="float:right;margin-top:-4px;" onclick="openAddLineItem('${section.id}')"><i class="fa-solid fa-plus"></i> Add line item</button>
+      </td>
+    </tr>`;
+    if (!sectionLines.length) {
+      html += `<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--text3);font-size:12px;font-style:italic;">No line items for this event yet.</td></tr>`;
+    } else {
+      sectionLines.forEach(l => {
+        html += renderLineRow(l, 'estimate', mobile);
+      });
+    }
+  });
+  body.innerHTML = html;
+}
+
+// Shared line-item row renderer — supports estimate + package modes, and mobile/desktop layouts.
+function renderLineRow(l, mode, mobile) {
+  const isPkg = mode === 'package';
+  const lineIdAttr = l.lineId;
+  const ltId = (isPkg ? 'pkglt_' : 'lt_') + lineIdAttr;
+  const total = (l.qty || 0) * (l.price || 0);
+  const kind = l.kind || 'service';
+  const updateFn = isPkg ? 'updatePkgLineField' : 'updateLineField';
+  const removeFn = isPkg ? 'removePkgLine' : 'removeLine';
+
+  if (mobile) {
+    // Card-style layout — render inside a <tr><td colspan="5">…</td></tr> wrapper
+    return `<tr><td colspan="5" style="padding:0;">
+      <div class="line-card">
+        <input class="line-name-input" value="${escapeAttr(l.name)}" placeholder="Service or deliverable name…" oninput="${updateFn}('${lineIdAttr}','name',this.value)" />
+        <textarea class="line-desc-input" placeholder="Description (shown on PDF)" oninput="${updateFn}('${lineIdAttr}','desc',this.value)">${escapeHtml(l.desc || '')}</textarea>
+        <div class="line-card-row">
+          <div>
+            <label>Kind</label>
+            <select class="line-kind-select" style="width:100%;" onchange="${updateFn}('${lineIdAttr}','kind',this.value)">
+              <option value="service" ${kind==='service'?'selected':''}>Service</option>
+              <option value="deliverable" ${kind==='deliverable'?'selected':''}>Deliverable</option>
+            </select>
+          </div>
+        </div>
+        <div class="line-card-row">
+          <div>
+            <label>Qty</label>
+            <input type="number" class="qty-input" value="${l.qty}" min="1" oninput="${updateFn}('${lineIdAttr}','qty',this.value)" />
+          </div>
+          <div>
+            <label>Unit Price (₹)</label>
+            <input type="number" class="price-input" value="${l.price}" min="0" oninput="${updateFn}('${lineIdAttr}','price',this.value)" />
+          </div>
+          <div>
+            <label>Total</label>
+            <div class="line-total" id="${ltId}">₹${total.toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+        <div class="line-card-row" style="margin-top:10px;">
+          <button class="row-del-btn" onclick="${removeFn}('${lineIdAttr}')"><i class="fa-solid fa-trash"></i> Remove line item</button>
+        </div>
+      </div>
+    </td></tr>`;
+  }
+
+  // Desktop table row
+  return `<tr>
+    <td>
+      <input class="line-name-input" value="${escapeAttr(l.name)}" placeholder="Service or deliverable name…" oninput="${updateFn}('${lineIdAttr}','name',this.value)" />
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+        <select class="line-kind-select" onchange="${updateFn}('${lineIdAttr}','kind',this.value)" title="Kind — used to group in PDF">
+          <option value="service" ${kind==='service'?'selected':''}>Service</option>
+          <option value="deliverable" ${kind==='deliverable'?'selected':''}>Deliverable</option>
+        </select>
+        <textarea class="line-desc-input" style="flex:1;margin-top:0;" placeholder="Description (shown on PDF)" oninput="${updateFn}('${lineIdAttr}','desc',this.value)">${escapeHtml(l.desc || '')}</textarea>
+      </div>
+    </td>
+    <td class="num"><input type="number" class="qty-input" value="${l.qty}" min="1" oninput="${updateFn}('${lineIdAttr}','qty',this.value)" /></td>
+    <td class="num"><input type="number" class="price-input" value="${l.price}" min="0" oninput="${updateFn}('${lineIdAttr}','price',this.value)" /></td>
+    <td class="num"><div class="line-total" id="${ltId}">₹${total.toLocaleString('en-IN')}</div></td>
+    <td class="num"><button class="row-del" onclick="${removeFn}('${lineIdAttr}')" title="Remove"><i class="fa-solid fa-xmark"></i></button></td>
+  </tr>`;
+}
+
+function updateLineField(lineId, field, val) {
+  const l = currentLineItems.find(x => x.lineId === lineId);
+  if (!l) return;
+  if (field === 'qty' || field === 'price') {
+    l[field] = parseFloat(val) || 0;
+    // update just this line's total
+    const lt = document.getElementById('lt_' + lineId);
+    if (lt) lt.textContent = '₹' + ((l.qty || 0) * (l.price || 0)).toLocaleString('en-IN');
+    recalcTotals();
+  } else {
+    l[field] = val;
+  }
+}
+
+function removeLine(lineId) {
+  currentLineItems = currentLineItems.filter(l => l.lineId !== lineId);
+  renderLineItems();
+  recalcTotals();
+}
+
+function recalcTotals() {
+  const subtotal = currentLineItems.reduce((s, l) => s + ((l.qty || 0) * (l.price || 0)), 0);
+  const disc = parseFloat(document.getElementById('ef_discount').value) || 0;
+  const total = Math.max(0, subtotal - disc);
+  document.getElementById('ef_subtotal').textContent = '₹' + subtotal.toLocaleString('en-IN');
+  document.getElementById('ef_total').textContent = '₹' + total.toLocaleString('en-IN');
+}
+
+// ─── ADD LINE ITEM MODAL (shared between estimate form and package builder) ─
+function _getActiveSections() { return pickLineMode === 'package' ? pkgSections : currentSections; }
+function _getActiveLineItems() { return pickLineMode === 'package' ? pkgLineItems : currentLineItems; }
+function _afterLineChange() {
+  if (pickLineMode === 'package') {
+    renderPkgSections();
+    renderPkgLineItems();
+    recalcPkgTotals();
+  } else {
+    renderSections();
+    renderLineItems();
+    recalcTotals();
+  }
+}
+
+function openAddLineItem(sectionId) {
+  pickLineMode = 'estimate';
+  _openAddLineItemImpl(sectionId);
+}
+function openAddLineItemPkg(sectionId) {
+  pickLineMode = 'package';
+  _openAddLineItemImpl(sectionId);
+}
+function _openAddLineItemImpl(sectionId) {
+  const sectionList = _getActiveSections();
+  pickLineTargetSectionId = sectionId || (sectionList[0] && sectionList[0].id) || null;
+  if (!pickLineTargetSectionId) {
+    showToast('Add an event first', 'error');
+    return;
+  }
+  const targetSection = sectionList.find(s => s.id === pickLineTargetSectionId);
+  const eventId = targetSection ? targetSection.eventTypeId : null;
+  document.getElementById('pickLineModalTitle').textContent =
+    targetSection ? 'Add line item — ' + targetSection.eventTypeName : 'Add line item';
+  const sel = document.getElementById('pickLineSelect');
+  let html = '<option value="">— pick an item —</option>';
+  const groups = { service: 'Services', deliverable: 'Deliverables' };
+  Object.keys(groups).forEach(k => {
+    const list = items.filter(i => i.kind === k);
+    if (!list.length) return;
+    html += `<optgroup label="${groups[k]}">`;
+    list.forEach(i => {
+      const p = priceForEvent(i.id, eventId);
+      html += `<option value="${i.id}">${i.name} — ₹${p.price.toLocaleString('en-IN')}</option>`;
+    });
+    html += `</optgroup>`;
+  });
+  sel.innerHTML = html;
+  document.getElementById('pickLineModal').classList.remove('hidden');
+}
+function closePickLineModal() { document.getElementById('pickLineModal').classList.add('hidden'); }
+function confirmPickLine() {
+  const id = document.getElementById('pickLineSelect').value;
+  if (!id) { showToast('Pick an item or use Add blank line', 'error'); return; }
+  if (!pickLineTargetSectionId) { showToast('No event section selected', 'error'); return; }
+  const it = items.find(i => i.id === id);
+  if (!it) return;
+  const sectionList = _getActiveSections();
+  const targetSection = sectionList.find(s => s.id === pickLineTargetSectionId);
+  const eventId = targetSection ? targetSection.eventTypeId : null;
+  const p = priceForEvent(id, eventId);
+  _getActiveLineItems().push({
+    lineId: genId(), sectionId: pickLineTargetSectionId, itemId: id, kind: it.kind, category: it.category,
+    name: it.name, desc: p.desc, qty: 1, price: p.price,
+  });
+  closePickLineModal();
+  _afterLineChange();
+}
+function addBlankLine() {
+  if (!pickLineTargetSectionId) { showToast('No event section selected', 'error'); return; }
+  _getActiveLineItems().push({
+    lineId: genId(), sectionId: pickLineTargetSectionId, itemId: null, kind: 'service', category: 'Add-ons',
+    name: '', desc: '', qty: 1, price: 0,
+  });
+  closePickLineModal();
+  _afterLineChange();
+}
+
+// ─── SAVE ESTIMATE ────────────────────────────────────────────────────────────
+
+function saveEstimate(thenDownload) {
+  const client = document.getElementById('ef_client').value.trim();
+  if (!client) { showToast('Please enter a client name', 'error'); return; }
+  if (!currentLineItems.length) { showToast('Add at least one line item', 'error'); return; }
+
+  const subtotal = currentLineItems.reduce((s, l) => s + ((l.qty || 0) * (l.price || 0)), 0);
+  const discount = parseFloat(document.getElementById('ef_discount').value) || 0;
+  const total = Math.max(0, subtotal - discount);
+
+  const existingEst = editingEstimateId ? estimates.find(e => e.id === editingEstimateId) : null;
+  const estData = {
+    id: editingEstimateId || genId(),
+    num: existingEst ? existingEst.num : generateNum(),
+    client,
+    phone: document.getElementById('ef_phone').value.trim(),
+    email: document.getElementById('ef_email').value.trim(),
+    sections: currentSections.map(s => ({ ...s })),
+    payment: document.getElementById('ef_payment').value,
+    validUntil: document.getElementById('ef_validUntil').value,
+    notes: document.getElementById('ef_notes').value.trim(),
+    lineItems: currentLineItems.map(l => ({
+      sectionId: l.sectionId,
+      category: l.category, name: l.name, desc: l.desc, qty: l.qty, price: l.price,
+      lineTotal: (l.qty || 0) * (l.price || 0), kind: l.kind,
+    })),
+    subtotal, discount, total,
+    createdAt: existingEst ? existingEst.createdAt : new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (editingEstimateId) {
+    estimates = estimates.map(e => e.id === editingEstimateId ? estData : e);
+  } else {
+    estimates.push(estData);
+  }
+  save('fw_estimates', estimates);
+  showToast('Estimate saved');
+
+  if (thenDownload) {
+    downloadPDF(estData);
+  }
+  editingEstimateId = estData.id;
+  showPage('estimates');
+}
+
+// ─── ESTIMATES LIST ───────────────────────────────────────────────────────────
+
+function estimateSummaryLine(e) {
+  if (e.sections && e.sections.length) {
+    const names = e.sections.map(s => s.eventTypeName).filter(Boolean);
+    const eventsLabel = names.length === 1 ? names[0] : names.join(' · ');
+    // Show earliest section date and first non-empty venue if present
+    const dates = e.sections.map(s => s.date).filter(Boolean).sort();
+    const venues = e.sections.map(s => s.venue).filter(Boolean);
+    const parts = [eventsLabel];
+    if (venues.length) parts.push(venues[0] + (venues.length > 1 ? ' +' + (venues.length-1) : ''));
+    if (dates.length) parts.push(formatDate(dates[0]));
+    return parts.join(' · ');
+  }
+  // legacy fallback
+  return (e.eventType || '') + (e.venue ? ' · ' + e.venue : '') + (e.eventDate ? ' · ' + formatDate(e.eventDate) : '');
+}
+
+function renderEstimatesList() {
+  const el = document.getElementById('estimatesList');
+  const sub = document.getElementById('estListSub');
+  if (!estimates.length) {
+    el.innerHTML = `<div class="empty-state"><i class="fa-solid fa-file-lines"></i><h3>No estimates yet</h3><p>Pick an event type to create your first estimate.</p></div>`;
+    sub.textContent = 'No estimates yet';
+    return;
+  }
+  const sorted = [...estimates].sort((a,b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+  sub.textContent = sorted.length + ' estimate' + (sorted.length === 1 ? '' : 's');
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px;">${sorted.map(e => {
+    const isMulti = e.sections && e.sections.length > 1;
+    return `<div class="card" style="display:flex;align-items:center;gap:18px;padding:16px 22px;cursor:pointer;" onclick="openEstimate('${e.id}')">
+      <div style="width:42px;height:42px;border-radius:10px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:17px;"><i class="fa-solid ${isMulti ? 'fa-layer-group' : 'fa-file-lines'}"></i></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;color:var(--text3);">${e.num}${isMulti ? ' · <span style="color:var(--accent);">' + e.sections.length + '-event package</span>' : ''}</div>
+        <div style="font-size:15px;font-weight:500;color:var(--text);margin-top:2px;">${e.client}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;">${estimateSummaryLine(e)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:16px;font-weight:500;font-variant-numeric:tabular-nums;">₹${(e.total||0).toLocaleString('en-IN')}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;">${formatDate(e.updatedAt || e.createdAt)}</div>
+      </div>
+      <button class="btn btn-sm" onclick="event.stopPropagation(); downloadPDFById('${e.id}')" title="Download PDF"><i class="fa-solid fa-download"></i></button>
+      <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteEstimate('${e.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function openEstimate(id) {
+  const e = estimates.find(x => x.id === id);
+  if (!e) return;
+  editingEstimateId = id;
+  // Re-hydrate working state from sections (migration in init guarantees sections exists)
+  currentSections = (e.sections || []).map(s => ({ ...s }));
+  currentLineItems = (e.lineItems || []).map(l => ({
+    lineId: genId(),
+    sectionId: l.sectionId || (currentSections[0] && currentSections[0].id),
+    itemId: null,
+    kind: l.kind,
+    category: l.category,
+    name: l.name,
+    desc: l.desc,
+    qty: l.qty,
+    price: l.price,
+  }));
+  document.getElementById('estBackLink').onclick = () => showPage('estimates');
+  document.getElementById('estFormTitle').textContent = e.num + ' — ' + e.client;
+  document.getElementById('estFormSub').textContent = 'Edit and re-save, or export as PDF';
+  document.getElementById('ef_client').value = e.client || '';
+  document.getElementById('ef_phone').value = e.phone || '';
+  document.getElementById('ef_email').value = e.email || '';
+  document.getElementById('ef_discount').value = e.discount || 0;
+  document.getElementById('ef_payment').value = e.payment || '30% advance, balance on event day';
+  document.getElementById('ef_validUntil').value = e.validUntil || '';
+  document.getElementById('ef_notes').value = e.notes || '';
+  renderSections();
+  renderLineItems();
+  recalcTotals();
+  showPage('estimate-form');
+}
+
+function deleteEstimate(id) {
+  confirmDialog('Delete estimate?', 'This will permanently delete the estimate. This cannot be undone.', () => {
+    estimates = estimates.filter(e => e.id !== id);
+    save('fw_estimates', estimates);
+    renderEstimatesList();
+    showToast('Estimate deleted');
+  });
+}
+
+function downloadPDFById(id) {
+  const e = estimates.find(x => x.id === id);
+  if (e) downloadPDF(e);
+}
+
+// ─── PDF EXPORT (no per-line prices, only grand total) ────────────────────────
+// NOTE: jsPDF's built-in Helvetica does not include the rupee glyph (₹).
+// We use "Rs." in the PDF to avoid font-fallback corruption. The UI keeps ₹.
+
+function formatRsPDF(n) {
+  return 'Rs. ' + (n || 0).toLocaleString('en-IN');
+}
+
+// ─── PDF THEMES ───────────────────────────────────────────────────────────────
+// Three visual themes. Each defines a palette + a couple of structural choices
+// the Minimal theme needs (no header band, no section fill, etc.).
+const PDF_THEMES = {
+  classic: {
+    label: 'Classic Editorial',
+    swatch: '#2B4C3F',
+    // colors as [r,g,b]
+    headerBg: [43,76,63],
+    headerText: [255,255,255],
+    headerMuted: [180,210,195],
+    headerMutedRight: [200,230,215],
+    clientStripBg: [240,237,230],
+    clientLabel: [120,116,110],
+    bodyText: [26,24,20],
+    bodyMuted: [100,100,90],
+    sectionBandBg: [43,76,63],
+    sectionBandText: [255,255,255],
+    eventBandBg: [232,240,237],
+    eventBandText: [43,76,63],
+    eventStripe: [43,76,63],
+    eventMetaText: [60,90,75],
+    subBandBg: [245,242,237],
+    subBandText: [100,100,90],
+    rowDivider: [232,228,220],
+    totalBarBg: [43,76,63],
+    totalBarLabel: [200,230,215],
+    totalBarValue: [255,255,255],
+    footerDivider: [226,221,213],
+    footerText: [120,118,112],
+    footerItalic: [150,148,142],
+    // style
+    style: 'banded',           // 'banded' = filled bands; 'rules' = thin underlines
+    studioFontSize: 17,
+    studioFontStyle: 'bold',
+    totalFontSize: 18,
+    totalFontStyle: 'bold',
+  },
+  minimal: {
+    label: 'Minimal Mono',
+    swatch: '#1A1814',
+    headerBg: null,            // null = no fill, just text + rule
+    headerText: [26,24,20],
+    headerMuted: [136,136,136],
+    headerMutedRight: [85,85,85],
+    clientStripBg: null,       // no fill
+    clientLabel: [136,136,136],
+    bodyText: [26,24,20],
+    bodyMuted: [136,136,136],
+    sectionBandBg: null,
+    sectionBandText: [26,24,20],
+    eventBandBg: null,
+    eventBandText: [26,24,20],
+    eventStripe: null,
+    eventMetaText: [120,120,120],
+    subBandBg: null,
+    subBandText: [160,160,160],
+    rowDivider: [232,232,232],
+    totalBarBg: null,
+    totalBarLabel: [136,136,136],
+    totalBarValue: [26,24,20],
+    footerDivider: [220,220,220],
+    footerText: [136,136,136],
+    footerItalic: [160,160,160],
+    style: 'rules',
+    studioFontSize: 20,
+    studioFontStyle: 'normal',  // looks more editorial in non-bold
+    totalFontSize: 22,
+    totalFontStyle: 'normal',
+  },
+  warm: {
+    label: 'Warm Cream',
+    swatch: '#C4623A',
+    headerBg: [196,98,58],
+    headerText: [255,248,238],
+    headerMuted: [245,217,199],
+    headerMutedRight: [245,217,199],
+    clientStripBg: [242,233,214],
+    clientLabel: [138,107,74],
+    bodyText: [61,40,24],
+    bodyMuted: [138,107,74],
+    sectionBandBg: [196,98,58],
+    sectionBandText: [255,248,238],
+    eventBandBg: [245,220,200],
+    eventBandText: [139,63,31],
+    eventStripe: [196,98,58],
+    eventMetaText: [139,63,31],
+    subBandBg: [242,233,214],
+    subBandText: [138,107,74],
+    rowDivider: [232,219,197],
+    totalBarBg: [196,98,58],
+    totalBarLabel: [245,217,199],
+    totalBarValue: [255,248,238],
+    footerDivider: [232,219,197],
+    footerText: [138,107,74],
+    footerItalic: [170,140,105],
+    style: 'banded',
+    studioFontSize: 16,
+    studioFontStyle: 'italic',
+    totalFontSize: 17,
+    totalFontStyle: 'bold',
+  },
+};
+
+function getActiveTheme() {
+  return PDF_THEMES[settings.pdfTheme] || PDF_THEMES.classic;
+}
+
+function buildPDFDoc(e) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, H = 297, M = 18, CW = W - M*2;
+  const BOTTOM_LIMIT = H - 25;
+  const T = getActiveTheme();
+  let y = M;
+
+  const setFont = (size, weight='normal', color=T.bodyText) => {
+    doc.setFontSize(size); doc.setFont('helvetica', weight); doc.setTextColor(...color);
+  };
+
+  // ─── HEADER ──────────────────────────────────────────────────
+  if (T.headerBg) {
+    // BANDED header (classic / warm)
+    doc.setFillColor(...T.headerBg);
+    doc.rect(0, 0, W, 30, 'F');
+    setFont(T.studioFontSize, T.studioFontStyle, T.headerText);
+    doc.text(settings.name || 'FrameWork Studio', M, 13);
+    setFont(9, 'normal', T.headerMuted);
+    if (settings.tag) doc.text(settings.tag, M, 19);
+    if (settings.city) doc.text(settings.city + (settings.phone ? '  ·  ' + settings.phone : ''), M, 24.5);
+    setFont(10, 'bold', T.headerText);
+    doc.text(e.num, W - M, 13, { align: 'right' });
+    setFont(8.5, 'normal', T.headerMutedRight);
+    doc.text('Issued: ' + formatDate(e.createdAt), W - M, 19, { align: 'right' });
+    if (e.validUntil) doc.text('Valid until: ' + formatDate(e.validUntil), W - M, 24.5, { align: 'right' });
+    y = 40;
+  } else {
+    // RULE header (minimal)
+    setFont(T.studioFontSize, T.studioFontStyle, T.headerText);
+    doc.text(settings.name || 'FrameWork Studio', M, 18);
+    setFont(8, 'normal', T.headerMuted);
+    const tagline = [settings.tag, settings.city, settings.phone].filter(Boolean).join('  ·  ');
+    if (tagline) doc.text(tagline.toUpperCase(), M, 23);
+    setFont(10, 'bold', T.headerText);
+    doc.text(e.num, W - M, 18, { align: 'right' });
+    setFont(8.5, 'normal', T.headerMutedRight);
+    doc.text(formatDate(e.createdAt) + (e.validUntil ? '  ·  Valid until ' + formatDate(e.validUntil) : ''), W - M, 23, { align: 'right' });
+    // Strong rule under header
+    doc.setDrawColor(...T.bodyText);
+    doc.setLineWidth(0.4);
+    doc.line(M, 28, W - M, 28);
+    y = 36;
+  }
+
+  // Normalize sections / lines (back-compat)
+  const sections = (e.sections && e.sections.length)
+    ? e.sections
+    : [{
+        id: 'legacy',
+        eventTypeName: e.eventType || 'Event',
+        eventIcon: 'fa-calendar-day',
+        date: e.eventDate || '',
+        venue: e.venue || '',
+      }];
+  const lineItems = (e.lineItems || []).map(li => ({
+    ...li,
+    sectionId: li.sectionId || sections[0].id,
+  }));
+
+  // ─── CLIENT INFO STRIP ───────────────────────────────────────
+  const isMulti = sections.length > 1;
+  if (T.clientStripBg) {
+    doc.setFillColor(...T.clientStripBg);
+    doc.rect(M, y, CW, 26, 'F');
+  }
+  setFont(7.5, 'bold', T.clientLabel);
+  doc.text('PREPARED FOR', M+5, y+6);
+  if (isMulti) doc.text('PACKAGE', M + CW*0.55, y+6);
+  else { doc.text('EVENT', M + CW*0.38, y+6); doc.text('VENUE', M + CW*0.68, y+6); }
+  setFont(11, 'bold', T.bodyText);
+  doc.text(e.client || '', M+5, y+13);
+  setFont(8.5, 'normal', T.bodyMuted);
+  if (e.email) doc.text(e.email, M+5, y+18);
+  if (e.phone) doc.text(e.phone, M+5, y+22);
+
+  if (isMulti) {
+    setFont(10.5, 'normal', T.bodyText);
+    doc.text(sections.length + '-event package', M + CW*0.55, y+13);
+    setFont(8.5, 'normal', T.bodyMuted);
+    const names = sections.map(s => s.eventTypeName).join(', ');
+    const nameLines = doc.splitTextToSize(names, CW*0.42);
+    doc.text(nameLines.slice(0, 2), M + CW*0.55, y+18);
+  } else {
+    const s = sections[0];
+    setFont(10.5, 'normal', T.bodyText);
+    doc.text(s.eventTypeName || '', M + CW*0.38, y+13);
+    setFont(8.5, 'normal', T.bodyMuted);
+    if (s.date) doc.text(formatDate(s.date), M + CW*0.38, y+18);
+    setFont(10.5, 'normal', T.bodyText);
+    const venueText = doc.splitTextToSize(s.venue || 'To be confirmed', CW*0.28);
+    doc.text(venueText, M + CW*0.68, y+13);
+  }
+
+  // In minimal style, draw a thin rule under the client strip
+  if (!T.clientStripBg) {
+    doc.setDrawColor(...T.rowDivider);
+    doc.setLineWidth(0.2);
+    doc.line(M, y + 26, W - M, y + 26);
+  }
+
+  y += 34;
+
+  // ─── WHAT'S INCLUDED ─────────────────────────────────────────
+  if (T.sectionBandBg) {
+    doc.setFillColor(...T.sectionBandBg);
+    doc.rect(M, y, CW, 9, 'F');
+    setFont(9, 'bold', T.sectionBandText);
+    doc.text("WHAT'S INCLUDED", M+5, y+6);
+    y += 9;
+  } else {
+    setFont(11, 'normal', T.sectionBandText);
+    doc.text("What's included", M, y + 6);
+    doc.setDrawColor(...T.sectionBandText);
+    doc.setLineWidth(0.4);
+    doc.line(M, y + 9, W - M, y + 9);
+    y += 14;
+  }
+
+  // ─── EVENT SECTIONS ─────────────────────────────────────────
+  sections.forEach((section, sIdx) => {
+    const sectionLines = lineItems.filter(li => li.sectionId === section.id);
+    if (!sectionLines.length) return;
+
+    // Section header
+    const headerH = T.eventBandBg ? 11 : 8;
+    if (y + headerH > BOTTOM_LIMIT - 30) { doc.addPage(); y = 22; }
+    if (T.eventBandBg) {
+      doc.setFillColor(...T.eventBandBg);
+      doc.rect(M, y, CW, headerH, 'F');
+      if (T.eventStripe) {
+        doc.setFillColor(...T.eventStripe);
+        doc.rect(M, y, 2, headerH, 'F');
+      }
+      setFont(10, 'bold', T.eventBandText);
+      doc.text((section.eventTypeName || 'Event').toUpperCase(), M+6, y+5.5);
+    } else {
+      setFont(9, 'bold', T.eventBandText);
+      doc.text((section.eventTypeName || 'Event').toUpperCase(), M, y+5);
+    }
+    // Right side: date · venue
+    const meta = [];
+    if (section.date) meta.push(formatDate(section.date));
+    if (section.venue) meta.push(section.venue);
+    if (meta.length) {
+      setFont(8.5, 'normal', T.eventMetaText);
+      doc.text(meta.join('  ·  '), W - M - (T.eventBandBg ? 5 : 0), y + (T.eventBandBg ? 5.5 : 5), { align: 'right' });
+    }
+    y += headerH;
+
+    // Sub-band renderer
+    const renderKindGroup = (label, kindItems) => {
+      if (!kindItems.length) return;
+      const subBandH = T.subBandBg ? 7 : 6;
+      if (y + subBandH > BOTTOM_LIMIT - 30) { doc.addPage(); y = 22; }
+      const labelX = T.eventBandBg ? M+9 : M+4;
+      if (T.subBandBg) {
+        doc.setFillColor(...T.subBandBg);
+        doc.rect(M, y, CW, subBandH, 'F');
+        setFont(8, 'bold', T.subBandText);
+        doc.text(label, labelX, y+4.8);
+      } else {
+        setFont(7.5, 'normal', T.subBandText);
+        doc.text('— ' + label + ' —', labelX, y+4.2);
+      }
+      y += subBandH;
+      // Items
+      kindItems.forEach(item => {
+        const itemX = T.eventBandBg ? M+13 : M+4;
+        const descLines = doc.splitTextToSize(item.desc || '', CW - (T.eventBandBg ? 22 : 8));
+        const qtyText = item.qty > 1 ? '  (×' + item.qty + ')' : '';
+        const rowH = 7 + (descLines.length * 3.8) + 4;
+        if (y + rowH > BOTTOM_LIMIT - 30) { doc.addPage(); y = 22; }
+        setFont(10, 'bold', T.bodyText);
+        doc.text(item.name + qtyText, itemX, y+5.5);
+        if (descLines.length) {
+          setFont(8.5, 'normal', T.bodyMuted);
+          doc.text(descLines, itemX, y+10.5);
+        }
+        doc.setDrawColor(...T.rowDivider);
+        doc.setLineWidth(0.2);
+        doc.line(itemX, y + rowH, M + CW - 4, y + rowH);
+        y += rowH;
+      });
+    };
+
+    const services = sectionLines.filter(li => li.kind === 'service');
+    const deliverables = sectionLines.filter(li => li.kind === 'deliverable');
+    renderKindGroup('SERVICES', services);
+    renderKindGroup('DELIVERABLES', deliverables);
+
+    y += 4;
+  });
+
+  // ─── ESTIMATED TOTAL ─────────────────────────────────────────
+  const totalBarH = T.totalBarBg ? 24 : 18;
+  const gapBeforeTotal = 10;
+  const paymentSpace = (e.payment ? 14 : 0) + (e.notes ? 20 : 0);
+  const footerSpace = 18;
+  const needed = gapBeforeTotal + totalBarH + paymentSpace + footerSpace;
+  if (y + needed > H - M) { doc.addPage(); y = 22; }
+
+  y += gapBeforeTotal;
+  if (T.totalBarBg) {
+    doc.setFillColor(...T.totalBarBg);
+    doc.rect(M, y, CW, totalBarH, 'F');
+    setFont(9, 'bold', T.totalBarLabel);
+    doc.text('ESTIMATED TOTAL', M+6, y + 9);
+    setFont(T.totalFontSize, T.totalFontStyle, T.totalBarValue);
+    doc.text(formatRsPDF(e.total), W - M - 8, y + 15, { align: 'right' });
+    y += totalBarH + 10;
+  } else {
+    doc.setDrawColor(...T.totalBarValue);
+    doc.setLineWidth(0.5);
+    doc.line(M, y, W - M, y);
+    setFont(9, 'normal', T.totalBarLabel);
+    doc.text('ESTIMATED TOTAL', M, y + 11);
+    setFont(T.totalFontSize, T.totalFontStyle, T.totalBarValue);
+    doc.text(formatRsPDF(e.total), W - M, y + 13, { align: 'right' });
+    y += totalBarH + 10;
+  }
+
+  // ─── PAYMENT / NOTES ─────────────────────────────────────────
+  if (e.payment) {
+    if (y > BOTTOM_LIMIT - 25) { doc.addPage(); y = 22; }
+    setFont(8, 'bold', T.bodyMuted);
+    doc.text('PAYMENT TERMS', M, y);
+    setFont(9.5, 'normal', T.bodyText);
+    doc.text(e.payment, M, y + 5.5);
+    y += 14;
+  }
+  if (e.notes) {
+    if (y > BOTTOM_LIMIT - 25) { doc.addPage(); y = 22; }
+    setFont(8, 'bold', T.bodyMuted);
+    doc.text('NOTES', M, y);
+    setFont(9.5, 'normal', T.bodyText);
+    const noteLines = doc.splitTextToSize(e.notes, CW);
+    doc.text(noteLines, M, y + 5.5);
+    y += 7 + noteLines.length * 4.5;
+  }
+
+  // ─── FOOTER ──────────────────────────────────────────────────
+  const totalPages = doc.internal.getNumberOfPages();
+  doc.setPage(totalPages);
+  doc.setDrawColor(...T.footerDivider);
+  doc.setLineWidth(0.2);
+  doc.line(M, H - 16, W - M, H - 16);
+  setFont(8, 'normal', T.footerText);
+  const footer = [settings.website, settings.email, settings.phone].filter(Boolean).join('  ·  ');
+  if (footer) doc.text(footer, W/2, H - 11, { align: 'center' });
+  setFont(7.5, 'italic', T.footerItalic);
+  doc.text('Thank you for considering ' + (settings.name || 'us') + '.', W/2, H - 6, { align: 'center' });
+
+  return doc;
+}
+
+function downloadPDF(e) {
+  const doc = buildPDFDoc(e);
+  doc.save((e.num || 'estimate') + '_' + (e.client || 'client').replace(/[^a-z0-9]/gi,'_') + '.pdf');
+  showToast('PDF downloaded');
+}
+
+// Live preview while editing — builds a snapshot from the working form state,
+// opens it as a blob URL in a new tab. Nothing is saved to localStorage.
+function previewPDF() {
+  if (!currentLineItems.length) { showToast('Add at least one line item to preview', 'error'); return; }
+  // Build a snapshot of the in-progress estimate (do NOT persist)
+  const subtotal = currentLineItems.reduce((s, l) => s + ((l.qty || 0) * (l.price || 0)), 0);
+  const discount = parseFloat(document.getElementById('ef_discount').value) || 0;
+  const total = Math.max(0, subtotal - discount);
+  const snapshot = {
+    num: editingEstimateId
+      ? (estimates.find(e => e.id === editingEstimateId) || {}).num || 'PREVIEW'
+      : 'PREVIEW',
+    client: document.getElementById('ef_client').value.trim() || '(client name)',
+    phone: document.getElementById('ef_phone').value.trim(),
+    email: document.getElementById('ef_email').value.trim(),
+    sections: currentSections.map(s => ({ ...s })),
+    lineItems: currentLineItems.map(l => ({
+      sectionId: l.sectionId, category: l.category, name: l.name, desc: l.desc,
+      qty: l.qty, price: l.price, kind: l.kind,
+    })),
+    payment: document.getElementById('ef_payment').value,
+    validUntil: document.getElementById('ef_validUntil').value,
+    notes: document.getElementById('ef_notes').value.trim(),
+    subtotal, discount, total,
+    createdAt: new Date().toISOString(),
+  };
+  try {
+    const doc = buildPDFDoc(snapshot);
+    const url = doc.output('bloburl');
+    window.open(url, '_blank');
+  } catch (err) {
+    console.error(err);
+    showToast('Preview failed — try downloading instead', 'error');
+  }
+}
+
+// ─── PACKAGES ─────────────────────────────────────────────────────────────────
+// A package is a saved template: { id, name, description, sections, lineItems, createdAt, updatedAt }
+// Prices are snapshotted at save time.
+
+function renderPackagesList() {
+  const el = document.getElementById('packagesList');
+  const sub = document.getElementById('pkgListSub');
+  if (!packages.length) {
+    el.innerHTML = `<div class="empty-state"><i class="fa-solid fa-box-archive"></i><h3>No packages yet</h3><p>Click "New package" to create a reusable template.</p></div>`;
+    sub.textContent = 'Reusable templates — saved bundles of events + line items';
+    return;
+  }
+  const sorted = [...packages].sort((a,b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+  sub.textContent = sorted.length + ' package' + (sorted.length === 1 ? '' : 's');
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px;">${sorted.map(p => {
+    const itemCount = (p.lineItems || []).length;
+    const eventNames = (p.sections || []).map(s => s.eventTypeName).filter(Boolean).join(' · ');
+    const total = (p.lineItems || []).reduce((s, l) => s + (l.qty || 0) * (l.price || 0), 0);
+    return `<div class="card" style="display:flex;align-items:center;gap:18px;padding:16px 22px;cursor:pointer;" onclick="openPackageBuilder('${p.id}')">
+      <div style="width:42px;height:42px;border-radius:10px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:17px;"><i class="fa-solid fa-box-archive"></i></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:15px;font-weight:500;color:var(--text);">${escapeHtml(p.name)}</div>
+        ${p.description ? `<div style="font-size:12px;color:var(--text2);margin-top:3px;">${escapeHtml(p.description)}</div>` : ''}
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;">${eventNames || 'No events'} · ${itemCount} item${itemCount===1?'':'s'}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--text2);">₹${total.toLocaleString('en-IN')}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;">snapshot</div>
+      </div>
+      <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deletePackage('${p.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function openPackageBuilder(packageId) {
+  // If packageId is the click event from "New package" button (no arg), it'll be undefined — fresh builder
+  if (typeof packageId !== 'string') packageId = null;
+  editingPackageId = packageId;
+  const delBtn = document.getElementById('pkgDeleteBtn');
+  const title = document.getElementById('pkgBuilderTitle');
+
+  if (packageId) {
+    const p = packages.find(x => x.id === packageId);
+    if (!p) { showToast('Package not found', 'error'); return; }
+    pkgSections = (p.sections || []).map(s => ({ ...s }));
+    pkgLineItems = (p.lineItems || []).map(l => ({ ...l, lineId: genId() }));
+    document.getElementById('pkg_name').value = p.name || '';
+    document.getElementById('pkg_desc').value = p.description || '';
+    title.textContent = 'Edit package';
+    delBtn.style.display = '';
+  } else {
+    pkgSections = [];
+    pkgLineItems = [];
+    document.getElementById('pkg_name').value = '';
+    document.getElementById('pkg_desc').value = '';
+    title.textContent = 'New package';
+    delBtn.style.display = 'none';
+  }
+  renderPkgSections();
+  renderPkgLineItems();
+  recalcPkgTotals();
+  showPage('package-builder');
+}
+
+function renderPkgSections() {
+  const area = document.getElementById('pkgSectionsArea');
+  const badge = document.getElementById('pkgSectionCountBadge');
+  badge.textContent = pkgSections.length === 1 ? '(1 event)' : '(' + pkgSections.length + ' events)';
+  if (!pkgSections.length) {
+    area.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px;border:1px dashed var(--border);border-radius:var(--radius-sm);">No events yet. Click "Add another event" to add one.</div>`;
+    return;
+  }
+  area.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px;">${
+    pkgSections.map(s => {
+      const itemCount = pkgLineItems.filter(l => l.sectionId === s.id).length;
+      const canDelete = pkgSections.length > 1;
+      return `<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;background:var(--surface);">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:32px;height:32px;border-radius:8px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;"><i class="fa-solid ${s.eventIcon || 'fa-calendar-day'}"></i></div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:500;color:var(--text);">${escapeHtml(s.eventTypeName)}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">${itemCount} line item${itemCount===1?'':'s'}</div>
+          </div>
+          ${canDelete ? `<button class="btn btn-sm btn-danger" onclick="removePkgSection('${s.id}')"><i class="fa-solid fa-trash"></i> Remove event</button>` : ''}
+        </div>
+      </div>`;
+    }).join('')
+  }</div>`;
+}
+
+function removePkgSection(sectionId) {
+  if (pkgSections.length <= 1) { showToast('A package must have at least one event', 'error'); return; }
+  const s = pkgSections.find(x => x.id === sectionId);
+  const lineCount = pkgLineItems.filter(l => l.sectionId === sectionId).length;
+  const msg = lineCount
+    ? `Remove "${s.eventTypeName}" and its ${lineCount} line item${lineCount===1?'':'s'}?`
+    : `Remove "${s.eventTypeName}" from this package?`;
+  confirmDialog('Remove event?', msg, () => {
+    pkgSections = pkgSections.filter(x => x.id !== sectionId);
+    pkgLineItems = pkgLineItems.filter(l => l.sectionId !== sectionId);
+    renderPkgSections();
+    renderPkgLineItems();
+    recalcPkgTotals();
+    showToast('Event removed');
+  });
+}
+
+function openAddSectionPkg() {
+  const sel = document.getElementById('addSectionPkgEventSelect');
+  sel.innerHTML = '<option value="">— pick an event type —</option>' +
+    events.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+  document.getElementById('addSectionPkgModal').classList.remove('hidden');
+}
+function closeAddSectionPkgModal() { document.getElementById('addSectionPkgModal').classList.add('hidden'); }
+function confirmAddSectionPkg() {
+  const eventId = document.getElementById('addSectionPkgEventSelect').value;
+  if (!eventId) { showToast('Pick an event type', 'error'); return; }
+  const ev = events.find(e => e.id === eventId);
+  if (!ev) return;
+  pkgSections.push({
+    id: 'sec_' + genId(),
+    eventTypeId: eventId,
+    eventTypeName: ev.name,
+    eventIcon: ev.icon || 'fa-calendar-day',
+  });
+  closeAddSectionPkgModal();
+  renderPkgSections();
+  renderPkgLineItems();
+}
+
+function renderPkgLineItems() {
+  const body = document.getElementById('pkgLineItemsBody');
+  if (!pkgSections.length) {
+    body.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3);font-size:13px;">Add an event first.</td></tr>`;
+    return;
+  }
+  const mobile = isMobile();
+  let html = '';
+  pkgSections.forEach(section => {
+    const sectionLines = pkgLineItems.filter(l => l.sectionId === section.id);
+    html += `<tr class="cat-row" style="background:var(--accent-light);">
+      <td colspan="5" style="color:var(--accent);font-size:11px;padding:10px 14px;border-left:3px solid var(--accent);">
+        <i class="fa-solid ${section.eventIcon || 'fa-calendar-day'}" style="margin-right:6px;"></i>
+        ${escapeHtml(section.eventTypeName)}
+        <button class="btn btn-sm" style="float:right;margin-top:-4px;" onclick="openAddLineItemPkg('${section.id}')"><i class="fa-solid fa-plus"></i> Add line item</button>
+      </td>
+    </tr>`;
+    if (!sectionLines.length) {
+      html += `<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--text3);font-size:12px;font-style:italic;">No line items for this event yet.</td></tr>`;
+    } else {
+      sectionLines.forEach(l => {
+        html += renderLineRow(l, 'package', mobile);
+      });
+    }
+  });
+  body.innerHTML = html;
+}
+
+function updatePkgLineField(lineId, field, val) {
+  const l = pkgLineItems.find(x => x.lineId === lineId);
+  if (!l) return;
+  if (field === 'qty' || field === 'price') {
+    l[field] = parseFloat(val) || 0;
+    const lt = document.getElementById('pkglt_' + lineId);
+    if (lt) lt.textContent = '₹' + ((l.qty || 0) * (l.price || 0)).toLocaleString('en-IN');
+    recalcPkgTotals();
+  } else {
+    l[field] = val;
+  }
+}
+
+function removePkgLine(lineId) {
+  pkgLineItems = pkgLineItems.filter(l => l.lineId !== lineId);
+  renderPkgSections();
+  renderPkgLineItems();
+  recalcPkgTotals();
+}
+
+function recalcPkgTotals() {
+  const total = pkgLineItems.reduce((s, l) => s + ((l.qty || 0) * (l.price || 0)), 0);
+  document.getElementById('pkg_total').textContent = '₹' + total.toLocaleString('en-IN');
+}
+
+function savePackageFromBuilder() {
+  const name = document.getElementById('pkg_name').value.trim();
+  if (!name) { showToast('Package name is required', 'error'); return; }
+  if (!pkgLineItems.length) { showToast('Add at least one line item', 'error'); return; }
+  const existing = editingPackageId ? packages.find(p => p.id === editingPackageId) : null;
+  const pkgData = {
+    id: editingPackageId || ('pkg_' + genId()),
+    name,
+    description: document.getElementById('pkg_desc').value.trim(),
+    sections: pkgSections.map(s => ({ ...s })),
+    lineItems: pkgLineItems.map(l => ({
+      sectionId: l.sectionId, name: l.name, desc: l.desc, qty: l.qty, price: l.price,
+      kind: l.kind, category: l.category,
+    })),
+    createdAt: existing ? existing.createdAt : new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  if (editingPackageId) {
+    packages = packages.map(p => p.id === editingPackageId ? pkgData : p);
+  } else {
+    packages.push(pkgData);
+  }
+  save('fw_packages', packages);
+  showToast('Package saved');
+  showPage('packages');
+}
+
+function deletePackageFromBuilder() {
+  if (!editingPackageId) return;
+  deletePackage(editingPackageId, () => showPage('packages'));
+}
+
+function deletePackage(id, after) {
+  const p = packages.find(x => x.id === id);
+  if (!p) return;
+  confirmDialog('Delete package?', `Delete "${p.name}"? This cannot be undone. Existing estimates created from this package are not affected.`, () => {
+    packages = packages.filter(x => x.id !== id);
+    save('fw_packages', packages);
+    renderPackagesList();
+    showToast('Package deleted');
+    if (after) after();
+  });
+}
+
+// ─── START ESTIMATE FROM PACKAGE ─────────────────────────────────────────────
+
+function openPackagePicker() {
+  const body = document.getElementById('packagePickerBody');
+  if (!packages.length) {
+    body.innerHTML = `<div style="text-align:center;padding:30px 0;color:var(--text3);">
+      <i class="fa-solid fa-box-archive" style="font-size:32px;opacity:0.5;margin-bottom:12px;"></i>
+      <div style="font-size:14px;color:var(--text2);margin-bottom:4px;">No packages yet</div>
+      <div style="font-size:12px;">Create one from the Packages tab in the sidebar.</div>
+    </div>`;
+  } else {
+    body.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow-y:auto;">${
+      packages.map(p => {
+        const itemCount = (p.lineItems || []).length;
+        const eventNames = (p.sections || []).map(s => s.eventTypeName).filter(Boolean).join(', ');
+        const total = (p.lineItems || []).reduce((s,l) => s + (l.qty||0) * (l.price||0), 0);
+        return `<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;" onclick="startFromPackage('${p.id}')" onmouseover="this.style.borderColor='var(--accent)';" onmouseout="this.style.borderColor='var(--border)';">
+          <div style="width:36px;height:36px;border-radius:8px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-box-archive"></i></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:500;color:var(--text);">${escapeHtml(p.name)}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">${eventNames || 'No events'} · ${itemCount} items · ₹${total.toLocaleString('en-IN')}</div>
+          </div>
+        </div>`;
+      }).join('')
+    }</div>`;
+  }
+  document.getElementById('packagePickerModal').classList.remove('hidden');
+}
+function closePackagePicker() { document.getElementById('packagePickerModal').classList.add('hidden'); }
+
+function startFromPackage(packageId) {
+  const p = packages.find(x => x.id === packageId);
+  if (!p) { showToast('Package not found', 'error'); return; }
+  closePackagePicker();
+
+  // Deep-copy sections with fresh IDs so they don't collide with the original
+  const idMap = {};
+  currentSections = (p.sections || []).map(s => {
+    const newId = 'sec_' + genId();
+    idMap[s.id] = newId;
+    return { ...s, id: newId, date: '', venue: '' };  // dates/venues are estimate-specific
+  });
+  currentLineItems = (p.lineItems || []).map(l => ({
+    lineId: genId(),
+    sectionId: idMap[l.sectionId] || (currentSections[0] && currentSections[0].id),
+    itemId: null,
+    kind: l.kind,
+    category: l.category,
+    name: l.name,
+    desc: l.desc,
+    qty: l.qty,
+    price: l.price,  // snapshotted
+  }));
+
+  // Open the estimate form fresh, like createEstimateFromSelection does
+  editingEstimateId = null;
+  document.getElementById('estBackLink').onclick = () => showPage('events');
+  document.getElementById('estFormTitle').textContent = 'New estimate — from "' + p.name + '"';
+  document.getElementById('estFormSub').textContent = 'Add client details and tweak line items if needed';
+  document.getElementById('ef_client').value = '';
+  document.getElementById('ef_phone').value = '';
+  document.getElementById('ef_email').value = '';
+  document.getElementById('ef_discount').value = 0;
+  document.getElementById('ef_payment').value = '30% advance, balance on event day';
+  document.getElementById('ef_notes').value = '';
+  const vd = new Date(); vd.setDate(vd.getDate() + 30);
+  document.getElementById('ef_validUntil').value = vd.toISOString().split('T')[0];
+
+  renderSections();
+  renderLineItems();
+  recalcTotals();
+  showPage('estimate-form');
+}
+
+// ─── STUDIO SETTINGS ──────────────────────────────────────────────────────────
+
+function applyBranding() {
+  const name = (settings.name || 'FrameWork').trim();
+  const tag = (settings.tag || 'Studio Estimates').trim();
+  document.getElementById('sb_name').textContent = name;
+  document.getElementById('sb_tag').textContent = tag || 'Studio Estimates';
+  document.title = name + ' — Estimates';
+}
+
+function loadSettingsForm() {
+  document.getElementById('st_name').value    = settings.name || '';
+  document.getElementById('st_tag').value     = settings.tag || '';
+  document.getElementById('st_phone').value   = settings.phone || '';
+  document.getElementById('st_email').value   = settings.email || '';
+  document.getElementById('st_website').value = settings.website || '';
+  document.getElementById('st_city').value    = settings.city || '';
+  renderThemeChooser();
+}
+
+function renderThemeChooser() {
+  const wrap = document.getElementById('themeChooser');
+  if (!wrap) return;
+  const cur = settings.pdfTheme || 'classic';
+  const themes = [
+    { id:'classic', label:'Classic Editorial', desc:'Deep green & cream. Refined, traditional.', swatches:['#2B4C3F', '#F0EDE6', '#FFFFFF'] },
+    { id:'minimal', label:'Minimal Mono', desc:'Black & white, thin rules, serif touches.',     swatches:['#1A1814', '#FFFFFF', '#E5E5E5'] },
+    { id:'warm',    label:'Warm Cream',      desc:'Cream & terracotta. Boho/film-style warmth.', swatches:['#C4623A', '#F2E9D6', '#FAF5EC'] },
+  ];
+  wrap.innerHTML = themes.map(t => `
+    <div class="theme-card ${t.id === cur ? 'selected' : ''}" onclick="pickTheme('${t.id}')">
+      <div class="theme-card-swatch">
+        ${t.swatches.map(c => `<div style="flex:1;background:${c};"></div>`).join('')}
+      </div>
+      <div class="theme-card-name">
+        ${t.label}
+        ${t.id === cur ? '<i class="fa-solid fa-circle-check" style="color:var(--accent);"></i>' : ''}
+      </div>
+      <div class="theme-card-desc">${t.desc}</div>
+    </div>
+  `).join('');
+}
+
+function pickTheme(id) {
+  settings.pdfTheme = id;
+  renderThemeChooser();
+}
+
+function saveSettings() {
+  const name = document.getElementById('st_name').value.trim();
+  if (!name) { showToast('Studio name is required', 'error'); return; }
+  settings = {
+    name,
+    tag:     document.getElementById('st_tag').value.trim(),
+    phone:   document.getElementById('st_phone').value.trim(),
+    email:   document.getElementById('st_email').value.trim(),
+    website: document.getElementById('st_website').value.trim(),
+    city:    document.getElementById('st_city').value.trim(),
+    pdfTheme: settings.pdfTheme || 'classic',
+  };
+  save('fw_settings', settings);
+  applyBranding();
+  showToast('Settings saved');
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function generateNum() {
+  const y = new Date().getFullYear();
+  const existing = estimates.filter(e => e.num && e.num.startsWith('EST-' + y));
+  const next = (existing.length + 1).toString().padStart(3,'0');
+  return 'EST-' + y + '-' + next;
+}
+function formatDate(d) {
+  if (!d) return '';
+  try { return new Date(d).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}); } catch { return d; }
+}
+function escapeHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeAttr(s) { return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let toastTimer;
+function showToast(msg, type='success') {
+  let t = document.querySelector('.toast'); if (t) t.remove();
+  clearTimeout(toastTimer);
+  const el = document.createElement('div'); el.className = 'toast' + (type==='error' ? ' error' : '');
+  el.innerHTML = `<i class="fa-solid ${type==='error'?'fa-circle-xmark':'fa-circle-check'}"></i> ${msg}`;
+  document.body.appendChild(el);
+  toastTimer = setTimeout(() => el.remove(), 2800);
+}
+
+function confirmDialog(title, msg, onConfirm) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmModal').classList.remove('hidden');
+  document.getElementById('confirmBtn').onclick = () => {
+    closeConfirm();
+    onConfirm();
+  };
+}
+function closeConfirm() { document.getElementById('confirmModal').classList.add('hidden'); }
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+
+applyBranding();
+showPage('events');
+
+// On viewport changes (rotate, resize across mobile/desktop boundary), re-render
+// any page that has size-dependent layouts (line items, override matrix, etc.)
+let _lastMobile = isMobile();
+window.addEventListener('resize', () => {
+  const nowMobile = isMobile();
+  if (nowMobile === _lastMobile) return;
+  _lastMobile = nowMobile;
+  // Re-render any currently visible page that has mobile-specific layouts
+  if (!document.getElementById('page-estimate-form').classList.contains('hidden')) {
+    renderSections();
+    renderLineItems();
+  }
+  if (!document.getElementById('page-package-builder').classList.contains('hidden')) {
+    renderPkgSections();
+    renderPkgLineItems();
+  }
+});
+</script>
+</body>
+</html>
