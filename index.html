@@ -1001,6 +1001,7 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
             <select id="it_kind">
               <option value="service">Service</option>
               <option value="deliverable">Deliverable</option>
+              <option value="post_production">Post-production (internal — hidden from PDF)</option>
             </select>
           </div>
         </div>
@@ -1351,7 +1352,7 @@ let multiSelectMode = false;
 let multiSelectedEventIds = [];     // ordered list of event IDs in the tray
 
 // Event-detail page — picker state per event tab
-// pickerSelections: Map<eventId, { services: Set, deliverables: Set }>
+// pickerSelections: Map<eventId, { services: Set, deliverables: Set, postProductions: Set }>
 let pickerSelections = new Map();
 let pickerActiveEventId = null;     // which tab is currently active
 let pickerEventIds = [];            // ordered list of events being picked from
@@ -1592,7 +1593,7 @@ function openMultiEventPicker(eventIds) {
   pickerEventIds = [...eventIds];
   pickerActiveEventId = eventIds[0];
   pickerSelections = new Map();
-  eventIds.forEach(id => pickerSelections.set(id, { services: new Set(), deliverables: new Set() }));
+  eventIds.forEach(id => pickerSelections.set(id, { services: new Set(), deliverables: new Set(), postProductions: new Set() }));
   renderPickerTabs();
   renderPicker();
   // Title
@@ -1619,7 +1620,7 @@ function renderPickerTabs() {
     const ev = events.find(e => e.id === id);
     if (!ev) return '';
     const sel = pickerSelections.get(id);
-    const count = (sel.services.size + sel.deliverables.size);
+    const count = (sel.services.size + sel.deliverables.size + sel.postProductions.size);
     const active = id === pickerActiveEventId ? 'active' : '';
     return `<div class="tab ${active}" onclick="switchPickerTab('${id}')">
       <i class="fa-solid ${ev.icon || 'fa-calendar-day'}" style="margin-right:6px;"></i>
@@ -1650,7 +1651,8 @@ function priceForEvent(itemId, eventId) {
 function renderPicker() {
   const services = items.filter(i => i.kind === 'service');
   const deliverables = items.filter(i => i.kind === 'deliverable');
-  const sel = pickerSelections.get(pickerActiveEventId) || { services: new Set(), deliverables: new Set() };
+  const postProductions = items.filter(i => i.kind === 'post_production');
+  const sel = pickerSelections.get(pickerActiveEventId) || { services: new Set(), deliverables: new Set(), postProductions: new Set() };
   const renderCards = (list, selectedSet, kind) => {
     const cats = [...new Set(list.map(i => i.category))];
     return cats.map(cat => {
@@ -1686,7 +1688,15 @@ function renderPicker() {
         <div class="picker-section-count"><span id="delSelCount">0</span> selected</div>
       </div>
       ${deliverables.length ? renderCards(deliverables, sel.deliverables, 'deliverable') : emptyMsg('No deliverables in master library yet')}
-    </div>`;
+    </div>
+    ${postProductions.length ? `
+    <div class="picker-section">
+      <div class="picker-section-head">
+        <div class="picker-section-title">Post-production <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;color:var(--text3);margin-left:6px;">(internal — not shown on PDF)</span></div>
+        <div class="picker-section-count"><span id="ppSelCount">0</span> selected</div>
+      </div>
+      ${renderCards(postProductions, sel.postProductions, 'post_production')}
+    </div>` : ''}`;
   document.getElementById('pickerArea').innerHTML = html;
   updateSelCounts();
 }
@@ -1699,7 +1709,11 @@ function emptyMsg(text) {
 function togglePick(kind, id) {
   const sel = pickerSelections.get(pickerActiveEventId);
   if (!sel) return;
-  const set = kind === 'service' ? sel.services : sel.deliverables;
+  let set;
+  if (kind === 'service') set = sel.services;
+  else if (kind === 'deliverable') set = sel.deliverables;
+  else if (kind === 'post_production') set = sel.postProductions;
+  else return;
   if (set.has(id)) set.delete(id); else set.add(id);
   renderPickerTabs();
   renderPicker();
@@ -1710,8 +1724,10 @@ function updateSelCounts() {
   if (!sel) return;
   const sc = document.getElementById('svcSelCount');
   const dc = document.getElementById('delSelCount');
+  const pc = document.getElementById('ppSelCount');
   if (sc) sc.textContent = sel.services.size;
   if (dc) dc.textContent = sel.deliverables.size;
+  if (pc) pc.textContent = sel.postProductions.size;
 }
 
 // ─── EVENT PRICING (overrides) ────────────────────────────────────────────────
@@ -1808,8 +1824,9 @@ function saveOverrides() {
 function renderMasterList() {
   const services = items.filter(i => i.kind === 'service');
   const deliverables = items.filter(i => i.kind === 'deliverable');
-  const renderTbl = (list, label) => {
-    if (!list.length) return `<div style="padding:30px;text-align:center;color:var(--text3);">No ${label.toLowerCase()} yet.</div>`;
+  const postProductions = items.filter(i => i.kind === 'post_production');
+  const renderTbl = (list, label, sublabel) => {
+    if (!list.length) return '';
     const cats = [...new Set(list.map(i => i.category))];
     let rows = '';
     cats.forEach(cat => {
@@ -1826,14 +1843,18 @@ function renderMasterList() {
       });
     });
     return `<div style="margin-bottom:22px;">
-      <h3 style="font-size:20px;margin-bottom:12px;color:var(--text);">${label}</h3>
+      <h3 style="font-size:20px;margin-bottom:4px;color:var(--text);">${label}</h3>
+      ${sublabel ? `<div style="font-size:12px;color:var(--text3);margin-bottom:10px;">${sublabel}</div>` : ''}
       <table class="svc-table">
         <thead><tr><th>Item</th><th class="num">Default price</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
   };
-  document.getElementById('masterList').innerHTML = renderTbl(services, 'Services') + renderTbl(deliverables, 'Deliverables');
+  document.getElementById('masterList').innerHTML =
+    renderTbl(services, 'Services', '') +
+    renderTbl(deliverables, 'Deliverables', '') +
+    renderTbl(postProductions, 'Post-production', 'Internal items — appear in your estimate totals but never on the client PDF.');
 }
 
 function openItemModal() {
@@ -1900,7 +1921,7 @@ function deleteItem() {
 function createEstimateFromSelection() {
   // Validate: at least one item across all events
   let totalSelected = 0;
-  pickerSelections.forEach(sel => { totalSelected += sel.services.size + sel.deliverables.size; });
+  pickerSelections.forEach(sel => { totalSelected += sel.services.size + sel.deliverables.size + sel.postProductions.size; });
   if (totalSelected === 0) {
     showToast('Select at least one service or deliverable', 'error');
     return;
@@ -1912,7 +1933,7 @@ function createEstimateFromSelection() {
   pickerEventIds.forEach(eventId => {
     const ev = events.find(e => e.id === eventId);
     if (!ev) return;
-    const sel = pickerSelections.get(eventId) || { services: new Set(), deliverables: new Set() };
+    const sel = pickerSelections.get(eventId) || { services: new Set(), deliverables: new Set(), postProductions: new Set() };
     // Even if no items selected for an event, keep its section — user might add items later
     const sectionId = 'sec_' + genId();
     currentSections.push({
@@ -1941,6 +1962,7 @@ function createEstimateFromSelection() {
     };
     sel.services.forEach(id => pushItem(id, 'service'));
     sel.deliverables.forEach(id => pushItem(id, 'deliverable'));
+    sel.postProductions.forEach(id => pushItem(id, 'post_production'));
   });
 
   // Drop empty sections only if there are multiple events AND at least one section has items
@@ -2126,14 +2148,23 @@ function renderLineRow(l, mode, mobile) {
   const ltId = (isPkg ? 'pkglt_' : 'lt_') + lineIdAttr;
   const total = (l.qty || 0) * (l.price || 0);
   const kind = l.kind || 'service';
+  const isPP = kind === 'post_production';
   const updateFn = isPkg ? 'updatePkgLineField' : 'updateLineField';
   const removeFn = isPkg ? 'removePkgLine' : 'removeLine';
 
+  // Visual styling for post-production rows: orange-tinted background hint
+  const ppBg = isPP ? 'background:var(--accent2-light);border-left:3px solid var(--accent2);' : '';
+  const ppBadge = isPP
+    ? `<span style="display:inline-block;background:var(--accent2);color:#fff;font-size:9px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle;"><i class="fa-solid fa-eye-slash" style="margin-right:4px;"></i>hidden on PDF</span>`
+    : '';
+
   if (mobile) {
-    // Card-style layout — render inside a <tr><td colspan="5">…</td></tr> wrapper
     return `<tr><td colspan="5" style="padding:0;">
-      <div class="line-card">
-        <input class="line-name-input" value="${escapeAttr(l.name)}" placeholder="Service or deliverable name…" oninput="${updateFn}('${lineIdAttr}','name',this.value)" />
+      <div class="line-card" style="${ppBg}padding-left:${isPP ? '11px' : '0'};">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <input class="line-name-input" style="flex:1;min-width:160px;" value="${escapeAttr(l.name)}" placeholder="Service or deliverable name…" oninput="${updateFn}('${lineIdAttr}','name',this.value)" />
+          ${ppBadge}
+        </div>
         <textarea class="line-desc-input" placeholder="Description (shown on PDF)" oninput="${updateFn}('${lineIdAttr}','desc',this.value)">${escapeHtml(l.desc || '')}</textarea>
         <div class="line-card-row">
           <div>
@@ -2141,6 +2172,7 @@ function renderLineRow(l, mode, mobile) {
             <select class="line-kind-select" style="width:100%;" onchange="${updateFn}('${lineIdAttr}','kind',this.value)">
               <option value="service" ${kind==='service'?'selected':''}>Service</option>
               <option value="deliverable" ${kind==='deliverable'?'selected':''}>Deliverable</option>
+              <option value="post_production" ${kind==='post_production'?'selected':''}>Post-production (hidden on PDF)</option>
             </select>
           </div>
         </div>
@@ -2166,13 +2198,18 @@ function renderLineRow(l, mode, mobile) {
   }
 
   // Desktop table row
-  return `<tr>
+  const ppRowStyle = isPP ? 'background:var(--accent2-light);' : '';
+  return `<tr style="${ppRowStyle}">
     <td>
-      <input class="line-name-input" value="${escapeAttr(l.name)}" placeholder="Service or deliverable name…" oninput="${updateFn}('${lineIdAttr}','name',this.value)" />
+      <div style="display:flex;align-items:center;gap:6px;">
+        <input class="line-name-input" style="flex:1;" value="${escapeAttr(l.name)}" placeholder="Service or deliverable name…" oninput="${updateFn}('${lineIdAttr}','name',this.value)" />
+        ${ppBadge}
+      </div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
         <select class="line-kind-select" onchange="${updateFn}('${lineIdAttr}','kind',this.value)" title="Kind — used to group in PDF">
           <option value="service" ${kind==='service'?'selected':''}>Service</option>
           <option value="deliverable" ${kind==='deliverable'?'selected':''}>Deliverable</option>
+          <option value="post_production" ${kind==='post_production'?'selected':''}>Post-production</option>
         </select>
         <textarea class="line-desc-input" style="flex:1;margin-top:0;" placeholder="Description (shown on PDF)" oninput="${updateFn}('${lineIdAttr}','desc',this.value)">${escapeHtml(l.desc || '')}</textarea>
       </div>
@@ -2318,6 +2355,8 @@ function saveEstimate(thenDownload) {
       lineTotal: (l.qty || 0) * (l.price || 0), kind: l.kind,
     })),
     subtotal, discount, total,
+    dealWon: existingEst ? !!existingEst.dealWon : false,
+    wonAt: existingEst ? (existingEst.wonAt || null) : null,
     createdAt: existingEst ? existingEst.createdAt : new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -2355,6 +2394,8 @@ function estimateSummaryLine(e) {
   return (e.eventType || '') + (e.venue ? ' · ' + e.venue : '') + (e.eventDate ? ' · ' + formatDate(e.eventDate) : '');
 }
 
+let estimatesFilter = 'all';   // 'all' | 'won'
+
 function renderEstimatesList() {
   const el = document.getElementById('estimatesList');
   const sub = document.getElementById('estListSub');
@@ -2363,25 +2404,86 @@ function renderEstimatesList() {
     sub.textContent = 'No estimates yet';
     return;
   }
-  const sorted = [...estimates].sort((a,b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
-  sub.textContent = sorted.length + ' estimate' + (sorted.length === 1 ? '' : 's');
-  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px;">${sorted.map(e => {
+
+  // Counts
+  const wonCount = estimates.filter(e => e.dealWon).length;
+  const allCount = estimates.length;
+
+  // Apply filter
+  let filtered = estimates;
+  if (estimatesFilter === 'won') filtered = estimates.filter(e => e.dealWon);
+
+  filtered = [...filtered].sort((a,b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+
+  const wonValueTotal = estimates.filter(e => e.dealWon).reduce((s,e) => s + (e.total || 0), 0);
+  sub.textContent = allCount + ' estimate' + (allCount === 1 ? '' : 's')
+    + ' · ' + wonCount + ' won'
+    + (wonCount ? ' (₹' + wonValueTotal.toLocaleString('en-IN') + ')' : '');
+
+  // Filter tabs at top
+  const tabBar = `<div class="tab-bar" style="margin-bottom:18px;">
+    <div class="tab ${estimatesFilter === 'all' ? 'active' : ''}" onclick="setEstimatesFilter('all')">
+      All estimates <span style="color:var(--text3);font-weight:400;margin-left:4px;">${allCount}</span>
+    </div>
+    <div class="tab ${estimatesFilter === 'won' ? 'active' : ''}" onclick="setEstimatesFilter('won')">
+      <i class="fa-solid fa-trophy" style="font-size:11px;margin-right:4px;"></i>Deal won <span style="color:var(--text3);font-weight:400;margin-left:4px;">${wonCount}</span>
+    </div>
+  </div>`;
+
+  if (!filtered.length) {
+    el.innerHTML = tabBar + `<div class="empty-state"><i class="fa-solid fa-trophy"></i><h3>No deals won yet</h3><p>Mark estimates as won from the list to track them here.</p></div>`;
+    return;
+  }
+
+  const rows = filtered.map(e => {
     const isMulti = e.sections && e.sections.length > 1;
-    return `<div class="card" style="display:flex;align-items:center;gap:18px;padding:16px 22px;cursor:pointer;" onclick="openEstimate('${e.id}')">
+    const won = !!e.dealWon;
+    const wonBadge = won
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--accent);color:#fff;font-size:10px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;"><i class="fa-solid fa-trophy" style="font-size:9px;"></i>Won</span>`
+      : '';
+    const wonAction = won
+      ? `<button class="btn btn-sm" onclick="event.stopPropagation(); toggleDealWon('${e.id}', false)" title="Mark as open"><i class="fa-solid fa-rotate-left"></i></button>`
+      : `<button class="btn btn-sm" onclick="event.stopPropagation(); toggleDealWon('${e.id}', true)" title="Mark as deal won" style="background:var(--accent-light);color:var(--accent);border-color:var(--accent-light);"><i class="fa-solid fa-trophy"></i></button>`;
+    return `<div class="card" style="display:flex;align-items:center;gap:18px;padding:16px 22px;cursor:pointer;${won ? 'border-color:var(--accent);' : ''}" onclick="openEstimate('${e.id}')">
       <div style="width:42px;height:42px;border-radius:10px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:17px;"><i class="fa-solid ${isMulti ? 'fa-layer-group' : 'fa-file-lines'}"></i></div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;color:var(--text3);">${e.num}${isMulti ? ' · <span style="color:var(--accent);">' + e.sections.length + '-event package</span>' : ''}</div>
+        <div style="font-size:13px;color:var(--text3);">${e.num}${isMulti ? ' · <span style="color:var(--accent);">' + e.sections.length + '-event package</span>' : ''}${wonBadge}</div>
         <div style="font-size:15px;font-weight:500;color:var(--text);margin-top:2px;">${e.client}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:3px;">${estimateSummaryLine(e)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;">${estimateSummaryLine(e)}${won && e.wonAt ? ' · <span style="color:var(--accent);">Won ' + formatDate(new Date(e.wonAt).toISOString()) + '</span>' : ''}</div>
       </div>
       <div style="text-align:right;">
         <div style="font-size:16px;font-weight:500;font-variant-numeric:tabular-nums;">₹${(e.total||0).toLocaleString('en-IN')}</div>
         <div style="font-size:11px;color:var(--text3);margin-top:3px;">${formatDate(e.updatedAt || e.createdAt)}</div>
       </div>
+      ${wonAction}
       <button class="btn btn-sm" onclick="event.stopPropagation(); downloadPDFById('${e.id}')" title="Download PDF"><i class="fa-solid fa-download"></i></button>
       <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteEstimate('${e.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
     </div>`;
-  }).join('')}</div>`;
+  }).join('');
+
+  el.innerHTML = tabBar + `<div style="display:flex;flex-direction:column;gap:10px;">${rows}</div>`;
+}
+
+function setEstimatesFilter(filter) {
+  estimatesFilter = filter;
+  renderEstimatesList();
+}
+
+function toggleDealWon(estimateId, makeWon) {
+  const e = estimates.find(x => x.id === estimateId);
+  if (!e) return;
+  if (makeWon) {
+    e.dealWon = true;
+    e.wonAt = new Date().toISOString();
+    showToast('Marked as deal won 🎉');
+  } else {
+    e.dealWon = false;
+    delete e.wonAt;
+    showToast('Marked as open');
+  }
+  e.updatedAt = new Date().toISOString();
+  save('fw_estimates', estimates);
+  renderEstimatesList();
 }
 
 function openEstimate(id) {
@@ -2603,10 +2705,12 @@ function buildPDFDoc(e) {
         date: e.eventDate || '',
         venue: e.venue || '',
       }];
-  const lineItems = (e.lineItems || []).map(li => ({
-    ...li,
-    sectionId: li.sectionId || sections[0].id,
-  }));
+  const lineItems = (e.lineItems || [])
+    .filter(li => li.kind !== 'post_production')   // post-production is internal — never on PDF
+    .map(li => ({
+      ...li,
+      sectionId: li.sectionId || sections[0].id,
+    }));
 
   // ─── CLIENT INFO STRIP ───────────────────────────────────────
   const isMulti = sections.length > 1;
