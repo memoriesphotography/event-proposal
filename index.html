@@ -220,13 +220,215 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
 .info-banner { background: var(--accent2-light); border: 1px solid #ecd9b8; border-radius: var(--radius-sm); padding: 12px 16px; font-size: 12px; color: #7a5021; display: flex; gap: 10px; align-items: flex-start; line-height: 1.5; }
 .info-banner i { color: var(--accent2); margin-top: 2px; }
 
+/* Mobile menu trigger — hidden on desktop */
+.mobile-bar { display: none; }
+.sidebar-backdrop { display: none; }
+.mobile-only { display: none; }
+
+/* ─── MOBILE STYLES ─────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  /* App layout: sidebar becomes off-canvas */
+  body { font-size: 15px; }
+  .app { display: block; }
+  .main { padding-top: 56px; min-width: 0; }
+  .mobile-bar {
+    display: flex; align-items: center; gap: 10px;
+    position: fixed; top: 0; left: 0; right: 0; height: 56px;
+    background: var(--accent); color: #fff; padding: 0 14px;
+    z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .mobile-bar-burger {
+    background: none; border: none; color: #fff; width: 40px; height: 40px;
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px;
+  }
+  .mobile-bar-burger:active { background: rgba(255,255,255,0.15); }
+  .mobile-bar-title { font-size: 16px; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .desktop-only { display: none !important; }
+  .mobile-only { display: initial; }
+
+  /* Sidebar slides in from left */
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
+    transform: translateX(-100%); transition: transform 0.25s ease;
+    z-index: 60; padding-top: 0;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 55; opacity: 0; transition: opacity 0.2s;
+  }
+  .sidebar-backdrop.open { display: block; opacity: 1; }
+
+  /* Topbars: stack title above actions */
+  .topbar {
+    flex-direction: column; align-items: stretch; gap: 12px;
+    padding: 14px 16px;
+  }
+  .topbar > div:first-child { min-width: 0; }
+  .page-heading { font-size: 20px; }
+  .topbar-actions { width: 100%; display: flex; flex-wrap: wrap; gap: 6px; }
+  .topbar-actions .btn { flex: 1 1 auto; justify-content: center; min-width: 0; }
+
+  .content-area { padding: 16px; }
+
+  /* Cards: tighter padding */
+  .card { padding: 16px; border-radius: 10px; }
+  .card-head { margin-bottom: 12px; padding-bottom: 10px; }
+
+  /* Forms: single column */
+  .form-row, .form-row-3 { grid-template-columns: 1fr; gap: 12px; }
+  .field input, .field select, .field textarea {
+    font-size: 16px;   /* prevents iOS zoom on focus */
+    padding: 12px 13px;
+  }
+
+  /* Buttons: bigger tap targets */
+  .btn { padding: 11px 14px; font-size: 14px; min-height: 42px; }
+  .btn-sm { padding: 8px 12px; min-height: 36px; }
+
+  /* Event tiles: 2 per row, tighter */
+  .event-tiles { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .event-tile { padding: 16px 14px; min-height: 130px; }
+  .event-tile-icon { width: 36px; height: 36px; font-size: 16px; }
+  .event-tile-name { font-size: 17px; }
+  .event-tile-meta { flex-direction: column; gap: 4px; font-size: 10px; padding-top: 8px; }
+  .event-tile.add i { font-size: 20px; }
+
+  /* Picker grid: 1 per row */
+  .picker-grid { grid-template-columns: 1fr; gap: 10px; }
+  .picker-card { padding: 14px 16px; }
+  .picker-card-name { font-size: 14px; }
+  .picker-card-desc { font-size: 12px; }
+  .picker-card-price { font-size: 13px; }
+
+  /* Tabs: scroll horizontally if needed */
+  #multiEventTabs { overflow-x: auto; flex-wrap: nowrap !important; }
+  .tab { white-space: nowrap; padding: 12px 14px; flex-shrink: 0; }
+
+  /* Multi-event tray */
+  #multiTray { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px; }
+  #multiTray > div { width: 100%; }
+
+  /* Master library table -> cards */
+  .svc-table thead { display: none; }
+  .svc-table, .svc-table tbody, .svc-table tr, .svc-table td { display: block; width: 100%; }
+  .svc-table tr { border-bottom: 1px solid var(--border); padding: 12px 14px; }
+  .svc-table tr:last-child { border-bottom: none; }
+  .svc-table tr.cat-row { padding: 8px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .svc-table tr.cat-row td { padding: 0; background: transparent; }
+  .svc-table td { padding: 4px 0; border-bottom: none; }
+  .svc-table td.num { text-align: left; font-weight: 500; color: var(--accent); }
+  .svc-table td.svc-price-cell::before { content: 'Price: '; color: var(--text3); font-weight: 400; }
+  .svc-table td.svc-action-cell { width: auto !important; padding-top: 8px; }
+  .svc-table td.svc-action-cell .btn { width: 100%; }
+
+  /* Configure prices override matrix -> cards */
+  .override-table thead { display: none; }
+  .override-table, .override-table tbody, .override-table tr, .override-table td { display: block; width: 100%; }
+  .override-table tr { border-bottom: 1px solid var(--border); padding: 12px 14px; }
+  .override-table tr.cat-row { padding: 8px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .override-table tr.cat-row td { padding: 0; background: transparent; }
+  .override-table td { padding: 6px 0; border-bottom: none; text-align: left !important; }
+  .override-input { width: 100% !important; font-size: 16px; padding: 10px 13px; }
+  .override-desc-input { font-size: 14px; padding: 10px 13px; }
+
+  /* Estimate form line items table -> cards */
+  .line-table thead { display: none; }
+  .line-table, .line-table tbody, .line-table tr, .line-table td { display: block; width: 100%; }
+  .line-table tr.cat-row {
+    background: var(--accent-light) !important;
+    border-radius: 8px; margin-top: 14px; padding: 10px 12px !important;
+  }
+  .line-table tr.cat-row td { padding: 0 !important; background: transparent !important; }
+  /* Line items section header (event row) — stack add-button below name */
+  .line-table tr.cat-row .btn-sm { display: block !important; margin: 8px 0 0 !important; width: 100% !important; float: none !important; }
+  .line-table tr:not(.cat-row) {
+    border-bottom: 1px solid var(--border); padding: 12px 0;
+  }
+  .line-table tr:not(.cat-row) td { padding: 4px 0; border-bottom: none; text-align: left !important; }
+  /* Mobile line-item card structure (injected by JS-rendered HTML — see renderLineItems mobile branch) */
+  .line-card { padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .line-card-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .line-card-row > div { flex: 1; min-width: 0; }
+  .line-card-row label { font-size: 11px; color: var(--text3); display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .line-card .line-name-input { font-size: 15px; width: 100%; }
+  .line-card .line-desc-input { font-size: 13px; width: 100%; margin-top: 6px; }
+  .line-card .line-kind-select { font-size: 13px; padding: 8px 10px; min-height: 36px; }
+  .line-card .qty-input, .line-card .price-input { width: 100%; text-align: left; font-size: 15px; padding: 9px 11px; }
+  .line-card .line-total { font-size: 16px; text-align: right; font-weight: 600; color: var(--accent); padding: 0; }
+  .line-card .row-del-btn { width: 100%; padding: 9px; border: 1px solid #f0bbb6; background: transparent; color: var(--danger); border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .line-card .row-del-btn:active { background: var(--danger-light); }
+
+  /* Totals: stack */
+  .totals { flex-direction: column; align-items: stretch; gap: 12px; padding: 14px 16px; }
+  .total-block { text-align: left; display: flex; justify-content: space-between; align-items: center; }
+  .total-divider { display: none; }
+  .total-grand .total-value { font-size: 22px; }
+
+  /* Estimates list: stack vertically inside the card */
+  #estimatesList .card,
+  #packagesList .card {
+    flex-direction: row; flex-wrap: wrap; align-items: flex-start;
+    padding: 14px 16px;
+  }
+  #estimatesList .card > div:first-child,
+  #packagesList .card > div:first-child { flex-shrink: 0; }
+  #estimatesList .card > div:nth-child(2),
+  #packagesList .card > div:nth-child(2) { flex: 1; min-width: 0; }
+  /* Push amount + buttons to a new row below name */
+  #estimatesList .card > div:nth-child(3),
+  #packagesList .card > div:nth-child(3) {
+    text-align: left; margin-top: 8px; flex-basis: 100%;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  #estimatesList .card > button,
+  #packagesList .card > button {
+    flex-basis: auto;
+  }
+
+  /* Modals: more breathing room */
+  .modal-backdrop { padding: 8px; }
+  .modal { max-height: 95vh; max-width: 100% !important; }
+  .modal-head { padding: 16px 18px; }
+  .modal-title { font-size: 17px; }
+  .modal-body { padding: 16px 18px; }
+  .modal-foot { padding: 12px 18px; flex-wrap: wrap; gap: 8px; }
+  .modal-foot .btn { flex: 1 1 auto; min-width: 0; justify-content: center; }
+  .modal-foot .btn[style*="margin-right:auto"] { flex-basis: 100%; margin-right: 0 !important; order: -1; }
+
+  /* Breadcrumb tap target */
+  .breadcrumb a { padding: 6px 0; display: inline-block; }
+
+  /* Theme card grid */
+  #themeChooser { grid-template-columns: 1fr !important; }
+
+  /* Section cards in form */
+  #sectionsArea .form-row { gap: 10px; }
+
+  /* Picker section heads stack */
+  .picker-section-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+  /* Confirm modal: tighter buttons */
+  #confirmModal .modal { max-width: 320px !important; }
+}
+
 </style>
 </head>
 <body>
 <div class="app">
 
+<!-- Mobile top app bar (hidden on desktop) -->
+<div class="mobile-bar">
+  <button class="mobile-bar-burger" onclick="toggleSidebar()" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
+  <div class="mobile-bar-title" id="mobileBarTitle">FrameWork</div>
+</div>
+
+<!-- Backdrop for sidebar (mobile only) -->
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
 <!-- SIDEBAR -->
-<aside class="sidebar">
+<aside class="sidebar" id="appSidebar">
   <div class="sidebar-logo">
     <h2 id="sb_name">FrameWork</h2>
     <span id="sb_tag">Studio Estimates</span>
@@ -851,6 +1053,44 @@ function showPage(page) {
   if (page === 'estimates') renderEstimatesList();
   if (page === 'packages') renderPackagesList();
   if (page === 'settings') loadSettingsForm();
+
+  // Mobile: close drawer + update top bar title
+  closeSidebar();
+  updateMobileTitle(page);
+  window.scrollTo({ top: 0, behavior: 'auto' });
+}
+
+// ─── MOBILE HELPERS ───────────────────────────────────────────────────────────
+
+function isMobile() { return window.matchMedia('(max-width: 720px)').matches; }
+
+function toggleSidebar() {
+  const sb = document.getElementById('appSidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  const open = sb.classList.toggle('open');
+  bd.classList.toggle('open', open);
+}
+
+function closeSidebar() {
+  document.getElementById('appSidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('open');
+}
+
+const MOBILE_TITLES = {
+  'events': 'Start estimate',
+  'event-detail': 'Pick services',
+  'event-pricing': 'Configure prices',
+  'estimate-form': 'Estimate',
+  'estimates': 'Saved estimates',
+  'services': 'Master library',
+  'packages': 'Packages',
+  'package-builder': 'Package builder',
+  'settings': 'Settings',
+};
+function updateMobileTitle(page) {
+  const t = document.getElementById('mobileBarTitle');
+  if (!t) return;
+  t.textContent = MOBILE_TITLES[page] || (settings.name || 'FrameWork');
 }
 
 // ─── EVENT TILES ──────────────────────────────────────────────────────────────
@@ -1230,8 +1470,8 @@ function renderMasterList() {
             <div class="svc-name">${i.name}</div>
             <div class="svc-desc">${i.desc || ''}</div>
           </td>
-          <td class="num">₹${i.price.toLocaleString('en-IN')}</td>
-          <td class="num" style="width:60px;"><button class="btn btn-sm btn-ghost" onclick="openEditItem('${i.id}')"><i class="fa-solid fa-pen"></i></button></td>
+          <td class="num svc-price-cell">₹${i.price.toLocaleString('en-IN')}</td>
+          <td class="num svc-action-cell" style="width:60px;"><button class="btn btn-sm btn-ghost" onclick="openEditItem('${i.id}')"><i class="fa-solid fa-pen"></i></button></td>
         </tr>`;
       });
     });
@@ -1502,6 +1742,7 @@ function renderLineItems() {
     return;
   }
 
+  const mobile = isMobile();
   let html = '';
   currentSections.forEach(section => {
     const sectionLines = currentLineItems.filter(l => l.sectionId === section.id);
@@ -1521,28 +1762,76 @@ function renderLineItems() {
       html += `<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--text3);font-size:12px;font-style:italic;">No line items for this event yet.</td></tr>`;
     } else {
       sectionLines.forEach(l => {
-        const total = (l.qty || 0) * (l.price || 0);
-        const kind = l.kind || 'service';
-        html += `<tr>
-          <td>
-            <input class="line-name-input" value="${escapeAttr(l.name)}" placeholder="Service or deliverable name…" oninput="updateLineField('${l.lineId}','name',this.value)" />
-            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
-              <select class="line-kind-select" onchange="updateLineField('${l.lineId}','kind',this.value)" title="Kind — used to group in PDF">
-                <option value="service" ${kind==='service'?'selected':''}>Service</option>
-                <option value="deliverable" ${kind==='deliverable'?'selected':''}>Deliverable</option>
-              </select>
-              <textarea class="line-desc-input" style="flex:1;margin-top:0;" placeholder="Description (shown on PDF)" oninput="updateLineField('${l.lineId}','desc',this.value)">${escapeHtml(l.desc || '')}</textarea>
-            </div>
-          </td>
-          <td class="num"><input type="number" class="qty-input" value="${l.qty}" min="1" oninput="updateLineField('${l.lineId}','qty',this.value)" /></td>
-          <td class="num"><input type="number" class="price-input" value="${l.price}" min="0" oninput="updateLineField('${l.lineId}','price',this.value)" /></td>
-          <td class="num"><div class="line-total" id="lt_${l.lineId}">₹${total.toLocaleString('en-IN')}</div></td>
-          <td class="num"><button class="row-del" onclick="removeLine('${l.lineId}')" title="Remove"><i class="fa-solid fa-xmark"></i></button></td>
-        </tr>`;
+        html += renderLineRow(l, 'estimate', mobile);
       });
     }
   });
   body.innerHTML = html;
+}
+
+// Shared line-item row renderer — supports estimate + package modes, and mobile/desktop layouts.
+function renderLineRow(l, mode, mobile) {
+  const isPkg = mode === 'package';
+  const lineIdAttr = l.lineId;
+  const ltId = (isPkg ? 'pkglt_' : 'lt_') + lineIdAttr;
+  const total = (l.qty || 0) * (l.price || 0);
+  const kind = l.kind || 'service';
+  const updateFn = isPkg ? 'updatePkgLineField' : 'updateLineField';
+  const removeFn = isPkg ? 'removePkgLine' : 'removeLine';
+
+  if (mobile) {
+    // Card-style layout — render inside a <tr><td colspan="5">…</td></tr> wrapper
+    return `<tr><td colspan="5" style="padding:0;">
+      <div class="line-card">
+        <input class="line-name-input" value="${escapeAttr(l.name)}" placeholder="Service or deliverable name…" oninput="${updateFn}('${lineIdAttr}','name',this.value)" />
+        <textarea class="line-desc-input" placeholder="Description (shown on PDF)" oninput="${updateFn}('${lineIdAttr}','desc',this.value)">${escapeHtml(l.desc || '')}</textarea>
+        <div class="line-card-row">
+          <div>
+            <label>Kind</label>
+            <select class="line-kind-select" style="width:100%;" onchange="${updateFn}('${lineIdAttr}','kind',this.value)">
+              <option value="service" ${kind==='service'?'selected':''}>Service</option>
+              <option value="deliverable" ${kind==='deliverable'?'selected':''}>Deliverable</option>
+            </select>
+          </div>
+        </div>
+        <div class="line-card-row">
+          <div>
+            <label>Qty</label>
+            <input type="number" class="qty-input" value="${l.qty}" min="1" oninput="${updateFn}('${lineIdAttr}','qty',this.value)" />
+          </div>
+          <div>
+            <label>Unit Price (₹)</label>
+            <input type="number" class="price-input" value="${l.price}" min="0" oninput="${updateFn}('${lineIdAttr}','price',this.value)" />
+          </div>
+          <div>
+            <label>Total</label>
+            <div class="line-total" id="${ltId}">₹${total.toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+        <div class="line-card-row" style="margin-top:10px;">
+          <button class="row-del-btn" onclick="${removeFn}('${lineIdAttr}')"><i class="fa-solid fa-trash"></i> Remove line item</button>
+        </div>
+      </div>
+    </td></tr>`;
+  }
+
+  // Desktop table row
+  return `<tr>
+    <td>
+      <input class="line-name-input" value="${escapeAttr(l.name)}" placeholder="Service or deliverable name…" oninput="${updateFn}('${lineIdAttr}','name',this.value)" />
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+        <select class="line-kind-select" onchange="${updateFn}('${lineIdAttr}','kind',this.value)" title="Kind — used to group in PDF">
+          <option value="service" ${kind==='service'?'selected':''}>Service</option>
+          <option value="deliverable" ${kind==='deliverable'?'selected':''}>Deliverable</option>
+        </select>
+        <textarea class="line-desc-input" style="flex:1;margin-top:0;" placeholder="Description (shown on PDF)" oninput="${updateFn}('${lineIdAttr}','desc',this.value)">${escapeHtml(l.desc || '')}</textarea>
+      </div>
+    </td>
+    <td class="num"><input type="number" class="qty-input" value="${l.qty}" min="1" oninput="${updateFn}('${lineIdAttr}','qty',this.value)" /></td>
+    <td class="num"><input type="number" class="price-input" value="${l.price}" min="0" oninput="${updateFn}('${lineIdAttr}','price',this.value)" /></td>
+    <td class="num"><div class="line-total" id="${ltId}">₹${total.toLocaleString('en-IN')}</div></td>
+    <td class="num"><button class="row-del" onclick="${removeFn}('${lineIdAttr}')" title="Remove"><i class="fa-solid fa-xmark"></i></button></td>
+  </tr>`;
 }
 
 function updateLineField(lineId, field, val) {
@@ -2343,6 +2632,7 @@ function renderPkgLineItems() {
     body.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3);font-size:13px;">Add an event first.</td></tr>`;
     return;
   }
+  const mobile = isMobile();
   let html = '';
   pkgSections.forEach(section => {
     const sectionLines = pkgLineItems.filter(l => l.sectionId === section.id);
@@ -2357,24 +2647,7 @@ function renderPkgLineItems() {
       html += `<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--text3);font-size:12px;font-style:italic;">No line items for this event yet.</td></tr>`;
     } else {
       sectionLines.forEach(l => {
-        const total = (l.qty || 0) * (l.price || 0);
-        const kind = l.kind || 'service';
-        html += `<tr>
-          <td>
-            <input class="line-name-input" value="${escapeAttr(l.name)}" placeholder="Service or deliverable name…" oninput="updatePkgLineField('${l.lineId}','name',this.value)" />
-            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
-              <select class="line-kind-select" onchange="updatePkgLineField('${l.lineId}','kind',this.value)">
-                <option value="service" ${kind==='service'?'selected':''}>Service</option>
-                <option value="deliverable" ${kind==='deliverable'?'selected':''}>Deliverable</option>
-              </select>
-              <textarea class="line-desc-input" style="flex:1;margin-top:0;" placeholder="Description (shown on PDF)" oninput="updatePkgLineField('${l.lineId}','desc',this.value)">${escapeHtml(l.desc || '')}</textarea>
-            </div>
-          </td>
-          <td class="num"><input type="number" class="qty-input" value="${l.qty}" min="1" oninput="updatePkgLineField('${l.lineId}','qty',this.value)" /></td>
-          <td class="num"><input type="number" class="price-input" value="${l.price}" min="0" oninput="updatePkgLineField('${l.lineId}','price',this.value)" /></td>
-          <td class="num"><div class="line-total" id="pkglt_${l.lineId}">₹${total.toLocaleString('en-IN')}</div></td>
-          <td class="num"><button class="row-del" onclick="removePkgLine('${l.lineId}')" title="Remove"><i class="fa-solid fa-xmark"></i></button></td>
-        </tr>`;
+        html += renderLineRow(l, 'package', mobile);
       });
     }
   });
@@ -2630,6 +2903,24 @@ function closeConfirm() { document.getElementById('confirmModal').classList.add(
 
 applyBranding();
 showPage('events');
+
+// On viewport changes (rotate, resize across mobile/desktop boundary), re-render
+// any page that has size-dependent layouts (line items, override matrix, etc.)
+let _lastMobile = isMobile();
+window.addEventListener('resize', () => {
+  const nowMobile = isMobile();
+  if (nowMobile === _lastMobile) return;
+  _lastMobile = nowMobile;
+  // Re-render any currently visible page that has mobile-specific layouts
+  if (!document.getElementById('page-estimate-form').classList.contains('hidden')) {
+    renderSections();
+    renderLineItems();
+  }
+  if (!document.getElementById('page-package-builder').classList.contains('hidden')) {
+    renderPkgSections();
+    renderPkgLineItems();
+  }
+});
 </script>
 </body>
 </html>
