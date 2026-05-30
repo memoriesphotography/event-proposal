@@ -782,6 +782,22 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
         </div>
       </div>
 
+      <div class="card" id="ef_addonsCard">
+        <div class="card-head">
+          <div class="card-title"><i class="fa-solid fa-gem"></i> Optional add-ons</div>
+          <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-size:12px;color:var(--text2);">
+            <input type="checkbox" id="ef_addonsEnabled" onchange="onAddonsToggled(this.checked)" style="width:auto;margin:0;" />
+            <span>Include on PDF</span>
+          </label>
+        </div>
+        <div id="ef_addonsBody" style="display:none;">
+          <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:10px;">Suggestions shown on the PDF as a separate section. <strong>Not added to the estimate total.</strong></div>
+          <div id="ef_addonsArea"></div>
+          <button class="btn btn-sm" style="margin-top:10px;width:100%;" onclick="addAddonRow()"><i class="fa-solid fa-plus"></i> Add line</button>
+        </div>
+        <div id="ef_addonsOffHint" style="font-size:12px;color:var(--text3);font-style:italic;">Toggle on to add upsell suggestions to this estimate (auto-fills from your saved presets).</div>
+      </div>
+
       <div class="card">
         <div class="card-head"><div class="card-title"><i class="fa-solid fa-note-sticky"></i> Notes & Terms</div></div>
         <div class="form-grid">
@@ -967,6 +983,16 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
         </div>
         <div id="st_paymentPresetsArea"></div>
         <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;"><strong>In the estimate form:</strong> these appear as quick options in the Payment Terms dropdown. You can still type a custom one for any specific estimate.</div>
+      </div>
+
+      <div class="card" style="max-width:760px;margin-top:18px;">
+        <div class="card-head">
+          <div class="card-title"><i class="fa-solid fa-gem"></i> Optional add-ons presets</div>
+          <button class="btn btn-sm" onclick="addAddonPreset()"><i class="fa-solid fa-plus"></i> Add preset</button>
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:10px;">Upsell suggestions like "Photo Booth — Rs.15,000 / event". Shown to clients on the PDF as a separate section but <strong>not added to the estimate total</strong>.</div>
+        <div id="st_addonPresetsArea"></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;"><strong>In the estimate form:</strong> turn on the "Optional add-ons" toggle to include this section. It pre-fills with these presets, but you can edit, add, or remove items per estimate.</div>
       </div>
 
       <div class="card" style="max-width:760px;margin-top:18px;">
@@ -1221,6 +1247,13 @@ const DEFAULT_PAYMENT_PRESETS = [
   'Full payment in advance',
 ];
 
+const DEFAULT_ADDON_PRESETS = [
+  { name: 'Photo Booth',            price: 'Rs.15,000 / event' },
+  { name: 'Drone Coverage',         price: 'Rs.10,000 / event' },
+  { name: 'Album Extra Sheets',     price: 'Rs.500 / sheet'   },
+  { name: 'Additional Album',       price: 'Rs.12,000 / album' },
+];
+
 const DEFAULT_TERMS = [
   '1. Booking is confirmed only upon receipt of the advance payment.',
   '2. Final edited photos and video are delivered within 8 weeks of the event date.',
@@ -1242,6 +1275,7 @@ const DEFAULT_SETTINGS = {
   pdfTheme: 'classic',
   logo: '',                                   // base64 data URL or ''
   paymentTermsPresets: DEFAULT_PAYMENT_PRESETS.slice(),
+  optionalAddonPresets: DEFAULT_ADDON_PRESETS.map(a => ({ ...a })),
   termsAndConditions: DEFAULT_TERMS,
 };
 
@@ -1422,6 +1456,11 @@ let pickLineTargetSectionId = null; // section the "Add line item" modal will in
 // currentLineItems: [{ lineId, sectionId, itemId, kind, category, name, desc, qty, price }]
 let currentSections = [];
 let currentLineItems = [];
+
+// Optional add-ons (upsell suggestions, not counted in total)
+// Shape: [{ id, name, price }]
+let currentAddons = [];
+let currentAddonsEnabled = false;
 
 // Package-builder working state (parallel to estimate state)
 let pkgSections = [];
@@ -2100,6 +2139,7 @@ function createEstimateFromSelection() {
   refreshPaymentTermsOptions(null);   // first preset by default
   document.getElementById('ef_notes').value = '';
   document.getElementById('ef_terms').value = settings.termsAndConditions || '';
+  refreshAddonsUI(false, []);   // off by default for new estimates
   // valid until = today + 30
   const vd = new Date(); vd.setDate(vd.getDate() + 30);
   document.getElementById('ef_validUntil').value = vd.toISOString().split('T')[0];
@@ -2126,6 +2166,78 @@ function resetMultiModeUI() {
   btn.innerHTML = '<i class="fa-solid fa-layer-group"></i> Multi-event';
   sub.textContent = 'Pick an event type to begin — or click "Multi-event" to combine several into one estimate';
   tray.classList.add('hidden');
+}
+
+// ─── ESTIMATE FORM: optional add-ons helpers ──────────────────────────────────
+
+function refreshAddonsUI(enabled, addons) {
+  currentAddonsEnabled = !!enabled;
+  currentAddons = (addons || []).map(a => ({ id: a.id || genId(), name: a.name || '', price: a.price || '' }));
+  document.getElementById('ef_addonsEnabled').checked = currentAddonsEnabled;
+  document.getElementById('ef_addonsBody').style.display = currentAddonsEnabled ? '' : 'none';
+  document.getElementById('ef_addonsOffHint').style.display = currentAddonsEnabled ? 'none' : '';
+  renderAddonsList();
+}
+
+function onAddonsToggled(checked) {
+  currentAddonsEnabled = checked;
+  document.getElementById('ef_addonsBody').style.display = checked ? '' : 'none';
+  document.getElementById('ef_addonsOffHint').style.display = checked ? 'none' : '';
+  if (checked && !currentAddons.length) {
+    // First toggle on — auto-fill from settings presets
+    currentAddons = (settings.optionalAddonPresets || DEFAULT_ADDON_PRESETS).map(a => ({
+      id: genId(), name: a.name || '', price: a.price || '',
+    }));
+    renderAddonsList();
+  }
+}
+
+function renderAddonsList() {
+  const area = document.getElementById('ef_addonsArea');
+  if (!area) return;
+  if (!currentAddons.length) {
+    area.innerHTML = `<div style="padding:18px;text-align:center;color:var(--text3);font-size:13px;border:1px dashed var(--border);border-radius:var(--radius-sm);">No add-ons yet. Click "Add line" below.</div>`;
+    return;
+  }
+  area.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;">${
+    currentAddons.map(a => `
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:var(--radius-sm);">
+        <input type="text" value="${escapeAttr(a.name)}" placeholder="Name (e.g. Photo Booth)" oninput="updateAddonField('${a.id}', 'name', this.value)" style="flex:1.6;border:1px solid transparent;background:transparent;padding:5px 8px;font-size:13px;font-family:inherit;color:var(--text);border-radius:4px;" />
+        <input type="text" value="${escapeAttr(a.price)}" placeholder="Rs.15,000 / event" oninput="updateAddonField('${a.id}', 'price', this.value)" style="flex:1;border:1px solid transparent;background:transparent;padding:5px 8px;font-size:12px;font-family:inherit;color:var(--text2);text-align:right;border-radius:4px;" />
+        <button class="btn btn-sm btn-danger" onclick="removeAddon('${a.id}')" title="Remove"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    `).join('')
+  }</div>`;
+}
+
+function addAddonRow() {
+  currentAddons.push({ id: genId(), name: '', price: '' });
+  renderAddonsList();
+  // Focus the new name input
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#ef_addonsArea input');
+    if (inputs.length >= 2) {
+      const nameInput = inputs[inputs.length - 2];
+      nameInput.focus();
+    }
+  }, 50);
+}
+
+function updateAddonField(id, field, value) {
+  const a = currentAddons.find(x => x.id === id);
+  if (a) a[field] = value;
+}
+
+function removeAddon(id) {
+  currentAddons = currentAddons.filter(a => a.id !== id);
+  renderAddonsList();
+}
+
+// Read add-ons in a clean shape for saving (drop ids, drop empties)
+function getCurrentAddonsForSave() {
+  return currentAddons
+    .map(a => ({ name: (a.name || '').trim(), price: (a.price || '').trim() }))
+    .filter(a => a.name || a.price);
 }
 
 // ─── ESTIMATE FORM: payment terms dropdown helpers ────────────────────────────
@@ -2514,6 +2626,8 @@ function saveEstimate(thenDownload) {
     validUntil: document.getElementById('ef_validUntil').value,
     notes: document.getElementById('ef_notes').value.trim(),
     terms: document.getElementById('ef_terms').value,
+    addonsEnabled: !!currentAddonsEnabled,
+    addons: getCurrentAddonsForSave(),
     lineItems: currentLineItems.map(l => ({
       sectionId: l.sectionId,
       category: l.category, name: l.name, desc: l.desc, qty: l.qty, price: l.price,
@@ -2679,6 +2793,7 @@ function openEstimate(id) {
   document.getElementById('ef_validUntil').value = e.validUntil || '';
   document.getElementById('ef_notes').value = e.notes || '';
   document.getElementById('ef_terms').value = e.terms != null ? e.terms : (settings.termsAndConditions || '');
+  refreshAddonsUI(!!e.addonsEnabled, e.addons || []);
   renderSections();
   renderLineItems();
   recalcTotals();
@@ -3091,6 +3206,54 @@ function buildPDFDoc(e) {
     y += 7 + noteLines.length * 4.5;
   }
 
+  // ─── OPTIONAL ADD-ONS (upsell section, not in total) ─────────
+  if (e.addonsEnabled && e.addons && e.addons.length) {
+    // Filter out completely empty rows just in case
+    const validAddons = e.addons.filter(a => (a.name || '').trim() || (a.price || '').trim());
+    if (validAddons.length) {
+      // Estimate space needed: header (12mm) + items (8mm each) + closing italic (6mm) + safety
+      const needed = 14 + validAddons.length * 8 + 6;
+      if (y + needed > BOTTOM_LIMIT) { doc.addPage(); y = 22; }
+      y += 4;
+
+      // Section header band
+      // Use the accent2 (warm amber) palette regardless of theme so it visually distinguishes
+      // from the main content. This matches the in-app orange-ish hint.
+      const ADDON_BG = [254, 246, 231];        // soft cream
+      const ADDON_BORDER = [224, 200, 135];    // amber rule
+      const ADDON_LABEL = [139, 94, 31];       // deep amber
+      const SECTION_H = 11;
+      doc.setFillColor(...ADDON_BG);
+      doc.rect(M, y, CW, SECTION_H, 'F');
+      doc.setDrawColor(...ADDON_BORDER);
+      doc.setLineWidth(0.4);
+      doc.line(M, y, W - M, y);
+      doc.line(M, y + SECTION_H, W - M, y + SECTION_H);
+      setFont(10, 'bold', ADDON_LABEL);
+      doc.text('OPTIONAL ADD-ONS', M + 4, y + 5);
+      setFont(8, 'italic', ADDON_LABEL);
+      doc.text('Not included in the total — talk to us if you\'d like to add any of these.', W - M - 4, y + 5, { align: 'right' });
+      y += SECTION_H + 3;
+
+      // Items
+      setFont(10.5, 'normal', T.bodyText);
+      validAddons.forEach(a => {
+        if (y + 7 > BOTTOM_LIMIT) { doc.addPage(); y = 22; }
+        // Name on left, price label on right
+        setFont(10.5, 'bold', T.bodyText);
+        doc.text((a.name || '').trim() || '—', M + 4, y + 4.5);
+        setFont(10.5, 'normal', ADDON_LABEL);
+        doc.text((a.price || '').trim() || '—', W - M - 4, y + 4.5, { align: 'right' });
+        // Light divider
+        doc.setDrawColor(...T.rowDivider);
+        doc.setLineWidth(0.15);
+        doc.line(M + 4, y + 7, W - M - 4, y + 7);
+        y += 8;
+      });
+      y += 6;
+    }
+  }
+
   // ─── TERMS & CONDITIONS PAGE (if any) ────────────────────────
   if (e.terms && e.terms.trim()) {
     doc.addPage();
@@ -3206,6 +3369,8 @@ function previewPDF() {
     validUntil: document.getElementById('ef_validUntil').value,
     notes: document.getElementById('ef_notes').value.trim(),
     terms: document.getElementById('ef_terms').value,
+    addonsEnabled: !!currentAddonsEnabled,
+    addons: getCurrentAddonsForSave(),
     subtotal, discount, total,
     createdAt: new Date().toISOString(),
   };
@@ -3512,6 +3677,7 @@ function startFromPackage(packageId) {
   refreshPaymentTermsOptions(null);
   document.getElementById('ef_notes').value = '';
   document.getElementById('ef_terms').value = settings.termsAndConditions || '';
+  refreshAddonsUI(false, []);   // off by default
   const vd = new Date(); vd.setDate(vd.getDate() + 30);
   document.getElementById('ef_validUntil').value = vd.toISOString().split('T')[0];
 
@@ -3541,6 +3707,7 @@ function loadSettingsForm() {
   document.getElementById('st_terms').value   = settings.termsAndConditions || '';
   renderLogoPreview();
   renderPaymentPresets();
+  renderAddonPresets();
   renderThemeChooser();
 }
 
@@ -3639,6 +3806,51 @@ function deletePaymentPreset(idx) {
   renderPaymentPresets();
 }
 
+// ── Optional add-on presets (Studio Settings) ───────────────────────
+function renderAddonPresets() {
+  const area = document.getElementById('st_addonPresetsArea');
+  if (!area) return;
+  const list = settings.optionalAddonPresets || [];
+  if (!list.length) {
+    area.innerHTML = `<div style="padding:18px;text-align:center;color:var(--text3);font-size:13px;border:1px dashed var(--border);border-radius:var(--radius-sm);">No presets yet. Click "Add preset" to create one.</div>`;
+    return;
+  }
+  area.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;">${
+    list.map((a, i) => `
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:var(--radius-sm);">
+        <input type="text" value="${escapeAttr(a.name || '')}" placeholder="Name (e.g. Photo Booth)" oninput="updateAddonPreset(${i}, 'name', this.value)" style="flex:1.6;border:1px solid transparent;background:transparent;padding:5px 8px;font-size:13px;font-family:inherit;color:var(--text);border-radius:4px;" />
+        <input type="text" value="${escapeAttr(a.price || '')}" placeholder="Price (e.g. Rs.15,000 / event)" oninput="updateAddonPreset(${i}, 'price', this.value)" style="flex:1;border:1px solid transparent;background:transparent;padding:5px 8px;font-size:12px;font-family:inherit;color:var(--text2);text-align:right;border-radius:4px;" />
+        <button class="btn btn-sm btn-danger" onclick="deleteAddonPreset(${i})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    `).join('')
+  }</div>`;
+}
+
+function addAddonPreset() {
+  if (!settings.optionalAddonPresets) settings.optionalAddonPresets = [];
+  settings.optionalAddonPresets.push({ name: 'New add-on', price: 'Rs. ___ / unit' });
+  renderAddonPresets();
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#st_addonPresetsArea input');
+    if (inputs.length >= 2) {
+      const nameInput = inputs[inputs.length - 2];
+      nameInput.focus(); nameInput.select();
+    }
+  }, 50);
+}
+
+function updateAddonPreset(idx, field, value) {
+  if (!settings.optionalAddonPresets) return;
+  if (!settings.optionalAddonPresets[idx]) return;
+  settings.optionalAddonPresets[idx][field] = value;
+}
+
+function deleteAddonPreset(idx) {
+  if (!settings.optionalAddonPresets) return;
+  settings.optionalAddonPresets.splice(idx, 1);
+  renderAddonPresets();
+}
+
 function renderThemeChooser() {
   const wrap = document.getElementById('themeChooser');
   if (!wrap) return;
@@ -3674,6 +3886,10 @@ function saveSettings() {
   const presets = (settings.paymentTermsPresets || [])
     .map(p => (p || '').trim())
     .filter(Boolean);
+  // Filter out empty addons (both name and price empty)
+  const addons = (settings.optionalAddonPresets || [])
+    .map(a => ({ name: (a.name || '').trim(), price: (a.price || '').trim() }))
+    .filter(a => a.name || a.price);
   settings = {
     name,
     tag:     document.getElementById('st_tag').value.trim(),
@@ -3686,6 +3902,7 @@ function saveSettings() {
     logoWidth: settings.logoWidth || 0,
     logoHeight: settings.logoHeight || 0,
     paymentTermsPresets: presets,
+    optionalAddonPresets: addons,
     termsAndConditions: document.getElementById('st_terms').value,
   };
   save('fw_settings', settings);
