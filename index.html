@@ -786,16 +786,20 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
         <div class="card-head"><div class="card-title"><i class="fa-solid fa-note-sticky"></i> Notes & Terms</div></div>
         <div class="form-grid">
           <div class="form-row">
-            <div class="field"><label>Payment terms</label>
-              <select id="ef_payment">
-                <option>30% advance, balance on event day</option>
-                <option>50% advance, balance on event day</option>
-                <option>Full payment in advance</option>
+            <div class="field">
+              <label>Payment terms</label>
+              <select id="ef_payment" onchange="onPaymentSelectChanged(this)">
+                <!-- populated dynamically when form opens -->
               </select>
+              <input type="text" id="ef_paymentCustom" placeholder="Type your payment terms…" style="display:none;margin-top:6px;" />
             </div>
             <div class="field"><label>Valid until</label><input type="date" id="ef_validUntil" /></div>
           </div>
           <div class="field"><label>Notes to client</label><textarea id="ef_notes" placeholder="Anything else the client should know..."></textarea></div>
+          <div class="field">
+            <label>Terms &amp; Conditions <span style="text-transform:none;font-weight:400;color:var(--text3);letter-spacing:0;margin-left:6px;">printed on a dedicated final page of the PDF</span></label>
+            <textarea id="ef_terms" placeholder="Pre-filled from Studio Settings. Edit for this estimate only." style="min-height:140px;line-height:1.6;"></textarea>
+          </div>
         </div>
       </div>
     </div>
@@ -937,6 +941,39 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; font-weight: 400; }
             <div class="field"><label>City / Location</label><input type="text" id="st_city" placeholder="e.g. Chennai, Tamil Nadu" /></div>
           </div>
         </div>
+      </div>
+
+      <div class="card" style="max-width:760px;margin-top:18px;">
+        <div class="card-head"><div class="card-title"><i class="fa-solid fa-image"></i> Company logo</div></div>
+        <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;">
+          <div id="st_logoPreviewBox" style="width:110px;height:110px;border:1px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:var(--surface2);">
+            <span id="st_logoPreviewEmpty" style="font-size:11px;color:var(--text3);text-align:center;padding:8px;">No logo<br>uploaded</span>
+            <img id="st_logoPreviewImg" src="" alt="" style="display:none;max-width:100%;max-height:100%;object-fit:contain;" />
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:10px;">PNG, JPG, or SVG. Transparent background recommended. Max 500 KB. Stored only on your account.</div>
+            <input type="file" id="st_logoFile" accept="image/png,image/jpeg,image/svg+xml" style="display:none;" onchange="handleLogoUpload(this)" />
+            <button class="btn btn-sm" onclick="document.getElementById('st_logoFile').click()"><i class="fa-solid fa-upload"></i> Upload logo</button>
+            <button class="btn btn-sm btn-danger" id="st_logoRemoveBtn" onclick="removeLogo()" style="display:none;margin-left:6px;"><i class="fa-solid fa-trash"></i> Remove</button>
+            <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;"><strong>On the PDF:</strong> appears to the left of your studio name in the header band.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:760px;margin-top:18px;">
+        <div class="card-head">
+          <div class="card-title"><i class="fa-solid fa-money-bill"></i> Payment terms presets</div>
+          <button class="btn btn-sm" onclick="addPaymentPreset()"><i class="fa-solid fa-plus"></i> Add preset</button>
+        </div>
+        <div id="st_paymentPresetsArea"></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;"><strong>In the estimate form:</strong> these appear as quick options in the Payment Terms dropdown. You can still type a custom one for any specific estimate.</div>
+      </div>
+
+      <div class="card" style="max-width:760px;margin-top:18px;">
+        <div class="card-head"><div class="card-title"><i class="fa-solid fa-file-contract"></i> Terms &amp; Conditions</div></div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:10px;">Default T&amp;C copied into every new estimate. You can also edit per-estimate from the estimate form.</div>
+        <textarea id="st_terms" placeholder="Enter your standard terms &amp; conditions, one item per line…" style="width:100%;min-height:200px;padding:12px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;color:var(--text);background:var(--surface);line-height:1.6;resize:vertical;"></textarea>
+        <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;"><strong>On the PDF:</strong> printed on a dedicated final page titled "Terms &amp; Conditions".</div>
       </div>
 
       <div class="card" style="max-width:760px;margin-top:18px;">
@@ -1178,6 +1215,23 @@ const DEFAULT_EVENTS = [
 // overrides shape:
 // { [itemId]: { price?: number, desc?: string } }
 
+const DEFAULT_PAYMENT_PRESETS = [
+  '30% advance, balance on event day',
+  '50% advance, balance on event day',
+  'Full payment in advance',
+];
+
+const DEFAULT_TERMS = [
+  '1. Booking is confirmed only upon receipt of the advance payment.',
+  '2. Final edited photos and video are delivered within 8 weeks of the event date.',
+  '3. Drone coverage is subject to venue permission and favourable weather.',
+  '4. Reschedules requested within 7 days of the event are subject to a 25% retainer fee.',
+  '5. All photos and videos are colour-graded; raw files are not provided.',
+  '6. Travel and accommodation beyond Chennai city limits will be billed separately at actuals.',
+  '7. In case of cancellation, the advance paid is non-refundable; balance is not collected.',
+  '8. This estimate is valid for 30 days from the issue date.',
+].join('\n');
+
 const DEFAULT_SETTINGS = {
   name: 'Memories Photography',
   tag: 'Professional Photography & Videography',
@@ -1186,6 +1240,9 @@ const DEFAULT_SETTINGS = {
   website: '',
   city: 'Chennai',
   pdfTheme: 'classic',
+  logo: '',                                   // base64 data URL or ''
+  paymentTermsPresets: DEFAULT_PAYMENT_PRESETS.slice(),
+  termsAndConditions: DEFAULT_TERMS,
 };
 
 // ─── FIREBASE-BACKED DATA LAYER ───────────────────────────────────────────────
@@ -2040,8 +2097,9 @@ function createEstimateFromSelection() {
   document.getElementById('ef_phone').value = '';
   document.getElementById('ef_email').value = '';
   document.getElementById('ef_discount').value = 0;
-  document.getElementById('ef_payment').value = '30% advance, balance on event day';
+  refreshPaymentTermsOptions(null);   // first preset by default
   document.getElementById('ef_notes').value = '';
+  document.getElementById('ef_terms').value = settings.termsAndConditions || '';
   // valid until = today + 30
   const vd = new Date(); vd.setDate(vd.getDate() + 30);
   document.getElementById('ef_validUntil').value = vd.toISOString().split('T')[0];
@@ -2070,7 +2128,57 @@ function resetMultiModeUI() {
   tray.classList.add('hidden');
 }
 
-// ─── ESTIMATE FORM: SECTIONS ──────────────────────────────────────────────────
+// ─── ESTIMATE FORM: payment terms dropdown helpers ────────────────────────────
+
+// Populate the payment-terms dropdown from settings presets + a "Custom" option.
+// If selectedValue matches a preset, select it. Otherwise, swap to the custom
+// text input pre-filled with selectedValue.
+function refreshPaymentTermsOptions(selectedValue) {
+  const sel = document.getElementById('ef_payment');
+  const customInput = document.getElementById('ef_paymentCustom');
+  const presets = (settings.paymentTermsPresets && settings.paymentTermsPresets.length)
+    ? settings.paymentTermsPresets
+    : DEFAULT_PAYMENT_PRESETS.slice();
+  let html = presets.map(p => `<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join('');
+  html += `<option value="__CUSTOM__" style="font-style:italic;color:var(--accent);">+ Custom payment terms…</option>`;
+  sel.innerHTML = html;
+
+  if (selectedValue && presets.includes(selectedValue)) {
+    sel.value = selectedValue;
+    customInput.style.display = 'none';
+    customInput.value = '';
+  } else if (selectedValue) {
+    // Value isn't in presets — show custom input pre-filled with it
+    sel.value = '__CUSTOM__';
+    customInput.style.display = '';
+    customInput.value = selectedValue;
+  } else {
+    // Default: pick the first preset
+    sel.value = presets[0] || '';
+    customInput.style.display = 'none';
+    customInput.value = '';
+  }
+}
+
+function onPaymentSelectChanged(selectEl) {
+  const customInput = document.getElementById('ef_paymentCustom');
+  if (selectEl.value === '__CUSTOM__') {
+    customInput.style.display = '';
+    customInput.focus();
+  } else {
+    customInput.style.display = 'none';
+    customInput.value = '';
+  }
+}
+
+// Read the effective payment value: custom input if active, else select value.
+function getPaymentTermsValue() {
+  const sel = document.getElementById('ef_payment');
+  if (sel.value === '__CUSTOM__') {
+    return document.getElementById('ef_paymentCustom').value.trim();
+  }
+  return sel.value;
+}
 
 function renderSections() {
   const area = document.getElementById('sectionsArea');
@@ -2402,9 +2510,10 @@ function saveEstimate(thenDownload) {
     phone: document.getElementById('ef_phone').value.trim(),
     email: document.getElementById('ef_email').value.trim(),
     sections: currentSections.map(s => ({ ...s })),
-    payment: document.getElementById('ef_payment').value,
+    payment: getPaymentTermsValue(),
     validUntil: document.getElementById('ef_validUntil').value,
     notes: document.getElementById('ef_notes').value.trim(),
+    terms: document.getElementById('ef_terms').value,
     lineItems: currentLineItems.map(l => ({
       sectionId: l.sectionId,
       category: l.category, name: l.name, desc: l.desc, qty: l.qty, price: l.price,
@@ -2566,9 +2675,10 @@ function openEstimate(id) {
   document.getElementById('ef_phone').value = e.phone || '';
   document.getElementById('ef_email').value = e.email || '';
   document.getElementById('ef_discount').value = e.discount || 0;
-  document.getElementById('ef_payment').value = e.payment || '30% advance, balance on event day';
+  refreshPaymentTermsOptions(e.payment || null);
   document.getElementById('ef_validUntil').value = e.validUntil || '';
   document.getElementById('ef_notes').value = e.notes || '';
+  document.getElementById('ef_terms').value = e.terms != null ? e.terms : (settings.termsAndConditions || '');
   renderSections();
   renderLineItems();
   recalcTotals();
@@ -2718,15 +2828,42 @@ function buildPDFDoc(e) {
   };
 
   // ─── HEADER ──────────────────────────────────────────────────
+  // If a logo is present, render it at the top-left and shift the studio text rightward.
+  // Logo target height = 14mm. Width derived from aspect ratio, capped at 32mm.
+  const LOGO_TARGET_H = 14;
+  const LOGO_MAX_W = 32;
+  let logoW = 0;
+  let logoH = 0;
+  if (settings.logo && settings.logoWidth && settings.logoHeight) {
+    logoH = LOGO_TARGET_H;
+    logoW = logoH * (settings.logoWidth / settings.logoHeight);
+    if (logoW > LOGO_MAX_W) {
+      logoW = LOGO_MAX_W;
+      logoH = logoW * (settings.logoHeight / settings.logoWidth);
+    }
+  }
+  const textStartX = M + (logoW ? logoW + 5 : 0);  // 5mm gap after logo
+
   if (T.headerBg) {
     // BANDED header (classic / warm)
     doc.setFillColor(...T.headerBg);
     doc.rect(0, 0, W, 30, 'F');
+    // Logo
+    if (logoW) {
+      try {
+        const fmt = settings.logo.startsWith('data:image/png') ? 'PNG'
+                  : settings.logo.startsWith('data:image/jpeg') || settings.logo.startsWith('data:image/jpg') ? 'JPEG'
+                  : 'PNG'; // SVG/other -> fall back; jsPDF supports PNG/JPEG natively
+        // Center vertically in the 30mm band
+        const logoY = (30 - logoH) / 2;
+        doc.addImage(settings.logo, fmt, M, logoY, logoW, logoH);
+      } catch (err) { console.warn('Logo render failed:', err); }
+    }
     setFont(T.studioFontSize, T.studioFontStyle, T.headerText);
-    doc.text(settings.name || 'FrameWork Studio', M, 13);
+    doc.text(settings.name || 'FrameWork Studio', textStartX, 13);
     setFont(9, 'normal', T.headerMuted);
-    if (settings.tag) doc.text(settings.tag, M, 19);
-    if (settings.city) doc.text(settings.city + (settings.phone ? '  ·  ' + settings.phone : ''), M, 24.5);
+    if (settings.tag) doc.text(settings.tag, textStartX, 19);
+    if (settings.city) doc.text(settings.city + (settings.phone ? '  ·  ' + settings.phone : ''), textStartX, 24.5);
     setFont(10, 'bold', T.headerText);
     doc.text(e.num, W - M, 13, { align: 'right' });
     setFont(8.5, 'normal', T.headerMutedRight);
@@ -2735,16 +2872,21 @@ function buildPDFDoc(e) {
     y = 40;
   } else {
     // RULE header (minimal)
+    if (logoW) {
+      try {
+        const fmt = settings.logo.startsWith('data:image/jpeg') || settings.logo.startsWith('data:image/jpg') ? 'JPEG' : 'PNG';
+        doc.addImage(settings.logo, fmt, M, 6, logoW, logoH);
+      } catch (err) { console.warn('Logo render failed:', err); }
+    }
     setFont(T.studioFontSize, T.studioFontStyle, T.headerText);
-    doc.text(settings.name || 'FrameWork Studio', M, 18);
+    doc.text(settings.name || 'FrameWork Studio', textStartX, 18);
     setFont(8, 'normal', T.headerMuted);
     const tagline = [settings.tag, settings.city, settings.phone].filter(Boolean).join('  ·  ');
-    if (tagline) doc.text(tagline.toUpperCase(), M, 23);
+    if (tagline) doc.text(tagline.toUpperCase(), textStartX, 23);
     setFont(10, 'bold', T.headerText);
     doc.text(e.num, W - M, 18, { align: 'right' });
     setFont(8.5, 'normal', T.headerMutedRight);
     doc.text(formatDate(e.createdAt) + (e.validUntil ? '  ·  Valid until ' + formatDate(e.validUntil) : ''), W - M, 23, { align: 'right' });
-    // Strong rule under header
     doc.setDrawColor(...T.bodyText);
     doc.setLineWidth(0.4);
     doc.line(M, 28, W - M, 28);
@@ -2949,17 +3091,87 @@ function buildPDFDoc(e) {
     y += 7 + noteLines.length * 4.5;
   }
 
-  // ─── FOOTER ──────────────────────────────────────────────────
+  // ─── TERMS & CONDITIONS PAGE (if any) ────────────────────────
+  if (e.terms && e.terms.trim()) {
+    doc.addPage();
+    // Repeat the header band so the page looks part of the document
+    if (T.headerBg) {
+      doc.setFillColor(...T.headerBg);
+      doc.rect(0, 0, W, 30, 'F');
+      // Logo (smaller this time to leave room for the heading)
+      if (logoW) {
+        try {
+          const fmt = settings.logo.startsWith('data:image/jpeg') || settings.logo.startsWith('data:image/jpg') ? 'JPEG' : 'PNG';
+          const logoY = (30 - logoH) / 2;
+          doc.addImage(settings.logo, fmt, M, logoY, logoW, logoH);
+        } catch {}
+      }
+      setFont(T.studioFontSize, T.studioFontStyle, T.headerText);
+      doc.text(settings.name || 'FrameWork Studio', textStartX, 13);
+      setFont(9, 'normal', T.headerMuted);
+      doc.text('Estimate ' + e.num, textStartX, 19);
+    } else {
+      // Minimal theme - rule header
+      if (logoW) {
+        try {
+          const fmt = settings.logo.startsWith('data:image/jpeg') || settings.logo.startsWith('data:image/jpg') ? 'JPEG' : 'PNG';
+          doc.addImage(settings.logo, fmt, M, 6, logoW, logoH);
+        } catch {}
+      }
+      setFont(T.studioFontSize, T.studioFontStyle, T.headerText);
+      doc.text(settings.name || 'FrameWork Studio', textStartX, 18);
+      setFont(8, 'normal', T.headerMuted);
+      doc.text('ESTIMATE ' + e.num, textStartX, 23);
+      doc.setDrawColor(...T.bodyText);
+      doc.setLineWidth(0.4);
+      doc.line(M, 28, W - M, 28);
+    }
+
+    // Heading
+    let ty = T.headerBg ? 48 : 46;
+    setFont(20, 'bold', T.bodyText);
+    doc.text('Terms & Conditions', M, ty);
+    // Thick rule under heading
+    doc.setDrawColor(...(T.sectionBandBg || T.bodyText));
+    doc.setLineWidth(0.6);
+    doc.line(M, ty + 3, W - M, ty + 3);
+    ty += 12;
+
+    // Body text — split into wrapped lines and walk down the page
+    setFont(10.5, 'normal', T.bodyText);
+    const termLines = doc.splitTextToSize(e.terms, CW);
+    const lineH = 5.5;
+    const BOTTOM_LIMIT_TC = H - 25;  // leave room for footer
+    termLines.forEach(line => {
+      if (ty + lineH > BOTTOM_LIMIT_TC) {
+        // Overflow onto another page if T&C is unusually long
+        doc.addPage();
+        ty = 22;
+        setFont(10.5, 'normal', T.bodyText);
+      }
+      doc.text(line, M, ty);
+      ty += lineH;
+    });
+  }
+
+  // ─── FOOTER (apply to every page) ────────────────────────────
   const totalPages = doc.internal.getNumberOfPages();
-  doc.setPage(totalPages);
-  doc.setDrawColor(...T.footerDivider);
-  doc.setLineWidth(0.2);
-  doc.line(M, H - 16, W - M, H - 16);
-  setFont(8, 'normal', T.footerText);
-  const footer = [settings.website, settings.email, settings.phone].filter(Boolean).join('  ·  ');
-  if (footer) doc.text(footer, W/2, H - 11, { align: 'center' });
-  setFont(7.5, 'italic', T.footerItalic);
-  doc.text('Thank you for considering ' + (settings.name || 'us') + '.', W/2, H - 6, { align: 'center' });
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(...T.footerDivider);
+    doc.setLineWidth(0.2);
+    doc.line(M, H - 16, W - M, H - 16);
+    setFont(8, 'normal', T.footerText);
+    const footer = [settings.website, settings.email, settings.phone].filter(Boolean).join('  ·  ');
+    if (footer) doc.text(footer, W/2, H - 11, { align: 'center' });
+    setFont(7.5, 'italic', T.footerItalic);
+    doc.text('Thank you for considering ' + (settings.name || 'us') + '.', W/2, H - 6, { align: 'center' });
+    // Page number (right side of footer) — only if there's more than one page
+    if (totalPages > 1) {
+      setFont(7.5, 'normal', T.footerText);
+      doc.text(p + ' of ' + totalPages, W - M, H - 11, { align: 'right' });
+    }
+  }
 
   return doc;
 }
@@ -2990,9 +3202,10 @@ function previewPDF() {
       sectionId: l.sectionId, category: l.category, name: l.name, desc: l.desc,
       qty: l.qty, price: l.price, kind: l.kind,
     })),
-    payment: document.getElementById('ef_payment').value,
+    payment: getPaymentTermsValue(),
     validUntil: document.getElementById('ef_validUntil').value,
     notes: document.getElementById('ef_notes').value.trim(),
+    terms: document.getElementById('ef_terms').value,
     subtotal, discount, total,
     createdAt: new Date().toISOString(),
   };
@@ -3296,8 +3509,9 @@ function startFromPackage(packageId) {
   document.getElementById('ef_phone').value = '';
   document.getElementById('ef_email').value = '';
   document.getElementById('ef_discount').value = 0;
-  document.getElementById('ef_payment').value = '30% advance, balance on event day';
+  refreshPaymentTermsOptions(null);
   document.getElementById('ef_notes').value = '';
+  document.getElementById('ef_terms').value = settings.termsAndConditions || '';
   const vd = new Date(); vd.setDate(vd.getDate() + 30);
   document.getElementById('ef_validUntil').value = vd.toISOString().split('T')[0];
 
@@ -3324,7 +3538,105 @@ function loadSettingsForm() {
   document.getElementById('st_email').value   = settings.email || '';
   document.getElementById('st_website').value = settings.website || '';
   document.getElementById('st_city').value    = settings.city || '';
+  document.getElementById('st_terms').value   = settings.termsAndConditions || '';
+  renderLogoPreview();
+  renderPaymentPresets();
   renderThemeChooser();
+}
+
+// ── Logo ──────────────────────────────────────────────────────────────
+function renderLogoPreview() {
+  const img = document.getElementById('st_logoPreviewImg');
+  const empty = document.getElementById('st_logoPreviewEmpty');
+  const removeBtn = document.getElementById('st_logoRemoveBtn');
+  if (settings.logo) {
+    img.src = settings.logo;
+    img.style.display = '';
+    empty.style.display = 'none';
+    removeBtn.style.display = '';
+  } else {
+    img.src = '';
+    img.style.display = 'none';
+    empty.style.display = '';
+    removeBtn.style.display = 'none';
+  }
+}
+
+function handleLogoUpload(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 500 * 1024) {
+    showToast('Logo too large (max 500 KB). Try compressing or resizing the image.', 'error');
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    // Measure dimensions so we can lay out the PDF synchronously later
+    const tmpImg = new Image();
+    tmpImg.onload = () => {
+      settings.logo = dataUrl;
+      settings.logoWidth = tmpImg.naturalWidth;
+      settings.logoHeight = tmpImg.naturalHeight;
+      renderLogoPreview();
+      showToast('Logo loaded — click Save settings to keep it');
+    };
+    tmpImg.onerror = () => showToast('Could not read image dimensions', 'error');
+    tmpImg.src = dataUrl;
+  };
+  reader.onerror = () => showToast('Failed to read file', 'error');
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function removeLogo() {
+  settings.logo = '';
+  delete settings.logoWidth;
+  delete settings.logoHeight;
+  renderLogoPreview();
+  showToast('Logo removed — click Save settings to confirm');
+}
+
+// ── Payment presets ───────────────────────────────────────────────────
+function renderPaymentPresets() {
+  const area = document.getElementById('st_paymentPresetsArea');
+  const list = settings.paymentTermsPresets || [];
+  if (!list.length) {
+    area.innerHTML = `<div style="padding:18px;text-align:center;color:var(--text3);font-size:13px;border:1px dashed var(--border);border-radius:var(--radius-sm);">No presets yet. Click "Add preset" to create one.</div>`;
+    return;
+  }
+  area.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;">${
+    list.map((p, i) => `
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:var(--radius-sm);font-size:13px;">
+        <input type="text" value="${escapeAttr(p)}" oninput="updatePaymentPreset(${i}, this.value)" style="flex:1;border:1px solid transparent;background:transparent;padding:4px 6px;font-size:13px;font-family:inherit;color:var(--text);border-radius:4px;" />
+        <button class="btn btn-sm btn-danger" onclick="deletePaymentPreset(${i})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    `).join('')
+  }</div>`;
+}
+
+function addPaymentPreset() {
+  if (!settings.paymentTermsPresets) settings.paymentTermsPresets = [];
+  settings.paymentTermsPresets.push('New payment term — click to edit');
+  renderPaymentPresets();
+  // Focus the newly added input
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#st_paymentPresetsArea input');
+    const last = inputs[inputs.length - 1];
+    if (last) { last.focus(); last.select(); }
+  }, 50);
+}
+
+function updatePaymentPreset(idx, value) {
+  if (!settings.paymentTermsPresets) return;
+  settings.paymentTermsPresets[idx] = value;
+}
+
+function deletePaymentPreset(idx) {
+  if (!settings.paymentTermsPresets) return;
+  settings.paymentTermsPresets.splice(idx, 1);
+  renderPaymentPresets();
 }
 
 function renderThemeChooser() {
@@ -3358,6 +3670,10 @@ function pickTheme(id) {
 function saveSettings() {
   const name = document.getElementById('st_name').value.trim();
   if (!name) { showToast('Studio name is required', 'error'); return; }
+  // Filter out empty presets, trim each
+  const presets = (settings.paymentTermsPresets || [])
+    .map(p => (p || '').trim())
+    .filter(Boolean);
   settings = {
     name,
     tag:     document.getElementById('st_tag').value.trim(),
@@ -3366,6 +3682,11 @@ function saveSettings() {
     website: document.getElementById('st_website').value.trim(),
     city:    document.getElementById('st_city').value.trim(),
     pdfTheme: settings.pdfTheme || 'classic',
+    logo: settings.logo || '',
+    logoWidth: settings.logoWidth || 0,
+    logoHeight: settings.logoHeight || 0,
+    paymentTermsPresets: presets,
+    termsAndConditions: document.getElementById('st_terms').value,
   };
   save('fw_settings', settings);
   applyBranding();
